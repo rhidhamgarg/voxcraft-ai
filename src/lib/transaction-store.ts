@@ -7,16 +7,22 @@ export interface CreditTransaction {
   createdAt: string;
 }
 
-export const globalTransactionsStore: CreditTransaction[] = [
-  {
-    id: "tx-init",
-    amount: 10000,
-    balanceAfter: 10000,
-    type: "monthly_renewal",
-    description: "Welcome grant: 10,000 starter credits",
-    createdAt: new Date().toISOString(),
-  },
-];
+declare global {
+  var __voxcraft_transactions__: CreditTransaction[] | undefined;
+}
+
+export const globalTransactionsStore: CreditTransaction[] =
+  globalThis.__voxcraft_transactions__ ||
+  (globalThis.__voxcraft_transactions__ = [
+    {
+      id: "tx-init",
+      amount: 10000,
+      balanceAfter: 10000,
+      type: "monthly_renewal",
+      description: "Welcome grant: 10,000 starter credits",
+      createdAt: new Date().toISOString(),
+    },
+  ]);
 
 export function addTransaction(amount: number, balanceAfter: number, type: CreditTransaction['type'], description: string) {
   globalTransactionsStore.unshift({

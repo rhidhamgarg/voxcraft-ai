@@ -1,6 +1,11 @@
 import { GenerationHistoryItem } from "@/types";
 
-export const globalHistoryStore: GenerationHistoryItem[] = [];
+declare global {
+  var __voxcraft_history__: GenerationHistoryItem[] | undefined;
+}
+
+export const globalHistoryStore: GenerationHistoryItem[] =
+  globalThis.__voxcraft_history__ || (globalThis.__voxcraft_history__ = []);
 
 export function addGenerationToHistory(item: GenerationHistoryItem) {
   globalHistoryStore.unshift(item);

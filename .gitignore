@@ -3,8 +3,15 @@
 /.pnp
 .pnp.js
 
-# Testing
+# Python Virtual Environments
+/kokoro_env/
+__pycache__/
+*.pyc
+
+# Testing & Scratch Audio
 /coverage
+*.wav
+test_*.py
 
 # Next.js
 /.next/

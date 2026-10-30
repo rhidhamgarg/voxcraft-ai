@@ -1,4 +1,8 @@
 import { Voice } from "@/types";
 
-// In-memory store for user-cloned voices in the current session
-export const clonedVoicesStore: Voice[] = [];
+declare global {
+  var __voxcraft_cloned_voices__: Voice[] | undefined;
+}
+
+export const clonedVoicesStore: Voice[] =
+  globalThis.__voxcraft_cloned_voices__ || (globalThis.__voxcraft_cloned_voices__ = []);

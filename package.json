@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "kokoro:serve": "kokoro_env\\Scripts\\python.exe python/kokoro_server.py",
+    "kokoro:test": "kokoro_env\\Scripts\\python.exe test_kokoro.py"
   },
   "dependencies": {
     "clsx": "^2.1.1",
