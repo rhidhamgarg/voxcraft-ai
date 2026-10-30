@@ -165,7 +165,7 @@ export default function AppSidebar() {
                     tooltip={item.title}
                   >
                     <Link href={item.url} className="flex items-center gap-2.5">
-                      <Icon className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-steelblue" />
                       {!isCollapsed && (
                         <span className="truncate">{item.title}</span>
                       )}

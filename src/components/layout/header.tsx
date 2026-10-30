@@ -36,12 +36,12 @@ export default function Header() {
         {/* Engine status */}
         <div className="hidden sm:flex items-center gap-2">
           <Badge
-            variant="outline"
-            className="h-7 gap-1.5 px-2.5 text-[11px] font-medium bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+            variant="steel"
+            className="h-7 gap-1.5 px-2.5 text-[11px] font-medium"
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-steelblue opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-steelblue"></span>
             </span>
             Kokoro 82M: Online
           </Badge>

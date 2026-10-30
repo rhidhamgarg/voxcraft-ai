@@ -35,8 +35,12 @@ import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice, GenerationSettings, GenerationHistoryItem } from "@/types";
 import VoiceSelectorModal from "@/components/VoiceSelectorModal";
 import AudioWaveformPlayer from "@/components/AudioWaveformPlayer";
+import { useRef } from "react";
+import { useGsapContext } from "@/hooks/use-gsap";
+import { gsap, MOTION } from "@/lib/gsap";
 
 export default function StudioPage() {
+  const studioRef = useRef<HTMLDivElement>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice>(DEFAULT_VOICES[0]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [text, setText] = useState<string>(
@@ -167,10 +171,37 @@ export default function StudioPage() {
     }
   };
 
+  // GSAP Studio Animations
+  useGsapContext(
+    () => {
+      const tl = gsap.timeline({ defaults: { ease: MOTION.ease.smooth } });
+      tl.fromTo(
+        ".gsap-studio-header",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4 }
+      )
+        .fromTo(
+          ".gsap-studio-editor",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.45 },
+          "-=0.2"
+        )
+        .fromTo(
+          ".gsap-studio-history",
+          { opacity: 0, x: 12 },
+          { opacity: 1, x: 0, duration: 0.45 },
+          "-=0.25"
+        );
+    },
+    studioRef,
+    []
+  );
+
   return (
-    <PageContainer>
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div ref={studioRef}>
+      <PageContainer>
+        {/* Header bar */}
+        <div className="gsap-studio-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -220,7 +251,7 @@ export default function StudioPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Main Editor Section (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="gsap-studio-editor lg:col-span-8 space-y-6">
           {/* Active Voice Card */}
           <Card>
             <CardContent className="flex items-center justify-between p-4">
@@ -440,7 +471,7 @@ export default function StudioPage() {
         </div>
 
         {/* History Sidebar (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="gsap-studio-history lg:col-span-4 space-y-4">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -501,7 +532,7 @@ export default function StudioPage() {
                           className="hover:text-foreground transition-colors p-1"
                         >
                           {copiedId === item.id ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            <Check className="w-3.5 h-3.5 text-steelblue" />
                           ) : (
                             <Copy className="w-3.5 h-3.5" />
                           )}
@@ -542,5 +573,6 @@ export default function StudioPage() {
         }}
       />
     </PageContainer>
+    </div>
   );
 }

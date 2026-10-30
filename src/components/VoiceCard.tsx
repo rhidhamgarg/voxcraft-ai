@@ -50,7 +50,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
             </div>
             {voice.isCloned && (
               <span
-                className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-500 rounded-full text-[9px] text-white"
+                className="absolute -bottom-1 -right-1 p-0.5 bg-steelblue rounded-full text-[9px] text-offwhite"
                 title="Custom Cloned Voice"
               >
                 <Mic2 className="w-2.5 h-2.5" />
@@ -61,7 +61,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
             <div className="flex items-center gap-2">
               <h3 className="font-heading font-semibold text-sm tracking-tight">{voice.name}</h3>
               {voice.isPremium && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono text-amber-500 border-amber-500/30">
+                <Badge variant="ivory" className="text-[10px] px-1.5 py-0 font-mono">
                   <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Pro
                 </Badge>
               )}

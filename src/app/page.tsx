@@ -36,6 +36,9 @@ import { Badge } from "@/components/ui/badge";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice } from "@/types";
 
+import { useGsapContext } from "@/hooks/use-gsap";
+import { gsap, MOTION } from "@/lib/gsap";
+
 interface GenerationItem {
   id: string;
   text: string;
@@ -46,6 +49,7 @@ interface GenerationItem {
 }
 
 export default function DashboardOverviewPage() {
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const [selectedVoice, setSelectedVoice] = React.useState<Voice>(DEFAULT_VOICES[0]);
   const [promptText, setPromptText] = React.useState(
     "Welcome to VoxCraft AI. Creating hyper-realistic, human-grade voices has never been simpler."
@@ -55,6 +59,38 @@ export default function DashboardOverviewPage() {
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
   const [recentGenerations, setRecentGenerations] = React.useState<GenerationItem[]>([]);
+
+  // GSAP Entrance Animations
+  useGsapContext(
+    () => {
+      const tl = gsap.timeline({ defaults: { ease: MOTION.ease.smooth } });
+      tl.fromTo(
+        ".gsap-header",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.45 }
+      )
+        .fromTo(
+          ".gsap-stat-card",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.07 },
+          "-=0.25"
+        )
+        .fromTo(
+          ".gsap-main-grid",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.45 },
+          "-=0.2"
+        )
+        .fromTo(
+          ".gsap-workflow-card",
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.35, stagger: 0.05 },
+          "-=0.2"
+        );
+    },
+    containerRef,
+    []
+  );
 
   // Fetch recent history on mount
   React.useEffect(() => {
@@ -154,139 +190,140 @@ export default function DashboardOverviewPage() {
   };
 
   return (
-    <PageContainer>
-      {/* Header bar */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
-            Voice Studio Dashboard
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
-            Generate lifelike neural audio with Kokoro-82M open weights and local 24kHz synthesis.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/studio/voices">
-              <Volume2 className="mr-1.5 h-3.5 w-3.5" />
-              Voice Catalog
-            </Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/studio">
-              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Open Full Studio
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">Activity Log</TabsTrigger>
-          <TabsTrigger value="models">Active Models</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          {/* Top 4 Stat Metric Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Total Generated
-                </CardDescription>
-                <CardAction>
-                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
-                    <TrendingUp className="h-3 w-3 text-emerald-500" />
-                    +18.2%
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                  48,250
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters synthesised</p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground pt-0">
-                128 audio tracks exported
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Kokoro Latency
-                </CardDescription>
-                <CardAction>
-                  <Badge variant="success" className="gap-1 font-mono text-[10px]">
-                    <Zap className="h-3 w-3" />
-                    Sub-second
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                  840 ms
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Mean inference time</p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground pt-0">
-                24kHz HiFi-GAN Vocoder
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Active Voices
-                </CardDescription>
-                <CardAction>
-                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
-                    <Layers className="h-3 w-3 text-blue-500" />
-                    v0.19
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                  18 Voices
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Curated neural models</p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground pt-0">
-                Zero per-minute cost
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Remaining Credits
-                </CardDescription>
-                <CardAction>
-                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
-                    <Coins className="h-3 w-3 text-amber-500" />
-                    Active
-                  </Badge>
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                  12,500
-                </CardTitle>
-                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters available</p>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground pt-0">
-                Renews automatically in 18d
-              </CardFooter>
-            </Card>
+    <div ref={containerRef}>
+      <PageContainer>
+        {/* Header bar */}
+        <div className="gsap-header flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
+              Voice Studio Dashboard
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
+              Generate lifelike neural audio with Kokoro-82M open weights and local 24kHz synthesis.
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/studio/voices">
+                <Volume2 className="mr-1.5 h-3.5 w-3.5 text-steelblue" />
+                Voice Catalog
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/studio">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                Open Full Studio
+              </Link>
+            </Button>
+          </div>
+        </div>
 
-          {/* Main Grid: Playground & Activity */}
-          <div className="grid gap-6 lg:grid-cols-12">
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="history">Activity Log</TabsTrigger>
+            <TabsTrigger value="models">Active Models</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Top 4 Stat Metric Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card className="gsap-stat-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Total Generated
+                  </CardDescription>
+                  <CardAction>
+                    <Badge variant="steel" className="gap-1 font-mono text-[10px]">
+                      <TrendingUp className="h-3 w-3 text-steelblue" />
+                      +18.2%
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                    48,250
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters synthesised</p>
+                </CardContent>
+                <CardFooter className="text-xs text-muted-foreground pt-0">
+                  128 audio tracks exported
+                </CardFooter>
+              </Card>
+
+              <Card className="gsap-stat-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Kokoro Latency
+                  </CardDescription>
+                  <CardAction>
+                    <Badge variant="steel" className="gap-1 font-mono text-[10px]">
+                      <Zap className="h-3 w-3 text-steelblue" />
+                      Sub-second
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                    840 ms
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Mean inference time</p>
+                </CardContent>
+                <CardFooter className="text-xs text-muted-foreground pt-0">
+                  24kHz HiFi-GAN Vocoder
+                </CardFooter>
+              </Card>
+
+              <Card className="gsap-stat-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Active Voices
+                  </CardDescription>
+                  <CardAction>
+                    <Badge variant="subtle" className="gap-1 font-mono text-[10px]">
+                      <Layers className="h-3 w-3 text-slate" />
+                      v0.19
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                    18 Voices
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Curated neural models</p>
+                </CardContent>
+                <CardFooter className="text-xs text-muted-foreground pt-0">
+                  Zero per-minute cost
+                </CardFooter>
+              </Card>
+
+              <Card className="gsap-stat-card">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Remaining Credits
+                  </CardDescription>
+                  <CardAction>
+                    <Badge variant="ivory" className="gap-1 font-mono text-[10px]">
+                      <Coins className="h-3 w-3 text-silver" />
+                      Active
+                    </Badge>
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                    12,500
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters available</p>
+                </CardContent>
+                <CardFooter className="text-xs text-muted-foreground pt-0">
+                  Renews automatically in 18d
+                </CardFooter>
+              </Card>
+            </div>
+
+            {/* Main Grid: Playground & Activity */}
+            <div className="gsap-main-grid grid gap-6 lg:grid-cols-12">
             {/* Quick Speech Playground */}
             <Card className="lg:col-span-7 flex flex-col justify-between">
               <CardHeader>
@@ -477,10 +514,10 @@ export default function DashboardOverviewPage() {
 
           {/* Quick Platform Workflows */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/studio" className="group">
-              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+            <Link href="/studio" className="group gsap-workflow-card">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-xs">
                 <CardHeader>
-                  <Sparkles className="h-5 w-5 text-primary mb-2" />
+                  <Sparkles className="h-5 w-5 text-ivory mb-2" />
                   <CardTitle className="text-sm font-heading font-semibold tracking-tight">TTS Studio</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Full vocal parameter control, speech pacing, emotion tags and instant preview.
@@ -489,10 +526,10 @@ export default function DashboardOverviewPage() {
               </Card>
             </Link>
 
-            <Link href="/studio/voices" className="group">
-              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+            <Link href="/studio/voices" className="group gsap-workflow-card">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-xs">
                 <CardHeader>
-                  <Volume2 className="h-5 w-5 text-blue-500 mb-2" />
+                  <Volume2 className="h-5 w-5 text-steelblue mb-2" />
                   <CardTitle className="text-sm font-heading font-semibold tracking-tight">Voice Catalog</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Browse 18 curated high-fidelity neural voices across styles and accents.
@@ -501,10 +538,10 @@ export default function DashboardOverviewPage() {
               </Card>
             </Link>
 
-            <Link href="/studio/cloning" className="group">
-              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+            <Link href="/studio/cloning" className="group gsap-workflow-card">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-xs">
                 <CardHeader>
-                  <MicVocal className="h-5 w-5 text-emerald-500 mb-2" />
+                  <MicVocal className="h-5 w-5 text-slate mb-2" />
                   <CardTitle className="text-sm font-heading font-semibold tracking-tight">Voice Cloning</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Synthesise custom voice embeddings from a 15-second audio sample.
@@ -513,10 +550,10 @@ export default function DashboardOverviewPage() {
               </Card>
             </Link>
 
-            <Link href="/pricing" className="group">
-              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+            <Link href="/pricing" className="group gsap-workflow-card">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-xs">
                 <CardHeader>
-                  <CreditCard className="h-5 w-5 text-amber-500 mb-2" />
+                  <CreditCard className="h-5 w-5 text-silver mb-2" />
                   <CardTitle className="text-sm font-heading font-semibold tracking-tight">Plans & Scaling</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Explore credit packs, commercial rights, and dedicated GPU worker clusters.
@@ -561,7 +598,7 @@ export default function DashboardOverviewPage() {
                         </span>
                       </div>
                     </div>
-                    <Badge variant="outline" className="font-mono text-[10px]">
+                    <Badge variant="steel" className="font-mono text-[10px]">
                       200 OK
                     </Badge>
                   </div>
@@ -576,7 +613,7 @@ export default function DashboardOverviewPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <Badge variant="success" className="w-fit text-[10px] mb-1">
+                <Badge variant="steel" className="w-fit text-[10px] mb-1">
                   Active
                 </Badge>
                 <CardTitle className="text-sm font-heading font-semibold tracking-tight">Kokoro-82M</CardTitle>
@@ -613,5 +650,6 @@ export default function DashboardOverviewPage() {
         </TabsContent>
       </Tabs>
     </PageContainer>
+    </div>
   );
 }
