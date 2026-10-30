@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice, GenerationSettings, GenerationHistoryItem } from "@/types";
-import { Sparkles, Sliders, Play, Loader2, Wand2, History, RotateCcw, Copy, Check, ChevronDown } from "lucide-react";
+import { Sparkles, Sliders, Play, Loader2, Wand2, History, RotateCcw, Copy, Check, ChevronDown, Download, AlertTriangle, Coins, Trash2 } from "lucide-react";
 import VoiceSelectorModal from "@/components/VoiceSelectorModal";
 import AudioWaveformPlayer from "@/components/AudioWaveformPlayer";
+import Link from "next/link";
 
 export default function StudioPage() {
   const [selectedVoice, setSelectedVoice] = useState<Voice>(DEFAULT_VOICES[0]);
@@ -26,9 +27,27 @@ export default function StudioPage() {
   const [currentDuration, setCurrentDuration] = useState<number>(0);
   const [history, setHistory] = useState<GenerationHistoryItem[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [quotaError, setQuotaError] = useState<{ available: number; required: number } | null>(null);
 
   const characterCount = text.length;
   const maxCharacters = 5000;
+
+  // Hydrate generation history from API on mount
+  useEffect(() => {
+    fetch("/api/history")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success && res.data?.items) {
+          setHistory(res.data.items);
+          if (res.data.items.length > 0 && !currentAudioUrl) {
+            setCurrentAudioUrl(res.data.items[0].audioUrl);
+            setCurrentDuration(res.data.items[0].durationSeconds);
+            setSelectedVoice(res.data.items[0].voice);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const emotionTags = [
     { label: "Softly", tag: "[softly] " },
@@ -46,6 +65,7 @@ export default function StudioPage() {
   const handleGenerate = async () => {
     if (!text.trim() || isGenerating) return;
     setIsGenerating(true);
+    setQuotaError(null);
 
     try {
       const response = await fetch("/api/tts/generate", {
@@ -59,23 +79,31 @@ export default function StudioPage() {
         }),
       });
 
-      const data = await response.json();
-      if (data.success && data.audioUrl) {
-        setCurrentAudioUrl(data.audioUrl);
-        setCurrentDuration(data.durationSeconds || 3.5);
+      const res = await response.json();
 
-        const newHistoryItem: GenerationHistoryItem = {
-          id: `gen-${Date.now()}`,
+      if (response.status === 402) {
+        setQuotaError({
+          available: res.error?.details?.available || 0,
+          required: res.error?.details?.required || text.length,
+        });
+        return;
+      }
+
+      if (res.success && res.data?.audioUrl) {
+        const item: GenerationHistoryItem = {
+          id: res.data.generationId,
           text,
           voice: selectedVoice,
           settings: { ...settings },
-          audioUrl: data.audioUrl,
-          durationSeconds: data.durationSeconds || 3.5,
+          audioUrl: res.data.audioUrl,
+          durationSeconds: res.data.durationSeconds || 3.5,
           characterCount: text.length,
           createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
 
-        setHistory((prev) => [newHistoryItem, ...prev]);
+        setCurrentAudioUrl(res.data.audioUrl);
+        setCurrentDuration(res.data.durationSeconds || 3.5);
+        setHistory((prev) => [item, ...prev]);
 
         // Deduct credits via API
         fetch("/api/user/credits", {
@@ -97,6 +125,20 @@ export default function StudioPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await fetch("/api/history", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      setHistory((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error("Failed to delete history item:", err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Breadcrumb */}
@@ -113,18 +155,41 @@ export default function StudioPage() {
 
         {/* Model Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-surface-400">Model:</span>
+          <span className="text-xs font-mono text-surface-400">Engine:</span>
           <select
             value={modelId}
             onChange={(e) => setModelId(e.target.value)}
             className="px-3 py-1.5 bg-surface-900 border border-surface-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-brand-500"
           >
-            <option value="vox_v4_ultra">Vox-4 Ultra (Emotional Awareness)</option>
+            <option value="vox_v4_ultra">Vox-4 Ultra (Contextual Emotion)</option>
             <option value="vox_v3_multilingual">Vox-3 Multilingual (32+ Languages)</option>
             <option value="vox_turbo_v2">Turbo Realtime (Sub-250ms Latency)</option>
           </select>
         </div>
       </div>
+
+      {/* Quota Depletion Alert Modal */}
+      {quotaError && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-rose-200">
+                Insufficient generation credits (Need: {quotaError.required}, Available: {quotaError.available})
+              </p>
+              <p className="text-[11px] text-surface-400">
+                Upgrade your subscription to keep synthesizing speech without interruption.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/pricing"
+            className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-500 transition-colors shrink-0"
+          >
+            Upgrade Plan
+          </Link>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Editor Section (2 cols) */}
@@ -337,7 +402,12 @@ export default function StudioPage() {
             {history.map((item) => (
               <div
                 key={item.id}
-                className="p-3 rounded-xl bg-surface-900/60 border border-surface-800/80 hover:border-surface-700 transition-all space-y-2"
+                onClick={() => {
+                  setCurrentAudioUrl(item.audioUrl);
+                  setCurrentDuration(item.durationSeconds);
+                  setSelectedVoice(item.voice);
+                }}
+                className="p-3 rounded-xl bg-surface-900/60 border border-surface-800/80 hover:border-brand-500/50 hover:bg-surface-800/40 cursor-pointer transition-all space-y-2"
               >
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-white">{item.voice.name}</span>
@@ -355,14 +425,18 @@ export default function StudioPage() {
 
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => copyPrompt(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyPrompt(item);
+                      }}
                       className="p-1 rounded text-surface-400 hover:text-white transition-colors"
                       title="Copy script"
                     >
                       {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setText(item.text);
                         setSelectedVoice(item.voice);
                         setCurrentAudioUrl(item.audioUrl);
@@ -372,6 +446,13 @@ export default function StudioPage() {
                       title="Load into editor"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => deleteHistoryItem(item.id, e)}
+                      className="p-1 rounded text-surface-400 hover:text-rose-400 transition-colors"
+                      title="Delete from history"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
