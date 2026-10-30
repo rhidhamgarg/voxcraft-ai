@@ -3,25 +3,34 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Download, Volume2, VolumeX, RotateCcw } from "lucide-react";
 import { formatDuration } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface AudioWaveformPlayerProps {
   audioUrl: string;
   voiceName?: string;
+  title?: string;
+  duration?: number;
   durationSeconds?: number;
   onDownload?: () => void;
 }
 
 export default function AudioWaveformPlayer({
   audioUrl,
-  voiceName = "Generated Speech",
-  durationSeconds = 0,
+  voiceName,
+  title,
+  duration: durationProp,
+  durationSeconds,
 }: AudioWaveformPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(durationSeconds || 0);
+  const initialDuration = durationProp || durationSeconds || 0;
+  const [duration, setDuration] = useState(initialDuration);
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [isMuted, setIsMuted] = useState(false);
+
+  const displayTitle = title || voiceName || "Generated Speech";
 
   useEffect(() => {
     setIsPlaying(false);
@@ -92,7 +101,7 @@ export default function AudioWaveformPlayer({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full glass-panel p-4 rounded-2xl border border-surface-700/80 shadow-xl">
+    <div className="w-full p-4 rounded-xl border border-border bg-card text-card-foreground shadow-xs">
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -103,14 +112,18 @@ export default function AudioWaveformPlayer({
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse"></div>
-          <span className="text-sm font-semibold text-white tracking-tight">{voiceName}</span>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-sm font-semibold tracking-tight">{displayTitle}</span>
         </div>
         <div className="flex items-center gap-2">
           {/* Speed Toggle */}
           <button
+            type="button"
             onClick={cycleSpeed}
-            className="px-2 py-1 rounded text-[11px] font-mono bg-surface-800 text-surface-300 hover:text-white transition-colors border border-surface-700"
+            className="px-2 py-0.5 rounded text-[11px] font-mono bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border cursor-pointer"
             title="Adjust Playback Speed"
           >
             {playbackRate}x
@@ -118,23 +131,21 @@ export default function AudioWaveformPlayer({
 
           {/* Mute Toggle */}
           <button
+            type="button"
             onClick={toggleMute}
-            className="p-1.5 rounded text-surface-400 hover:text-white transition-colors hover:bg-surface-800"
+            className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             title="Mute / Unmute"
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-4 h-4 text-destructive" /> : <Volume2 className="w-4 h-4" />}
           </button>
 
           {/* Download Button */}
-          <a
-            href={audioUrl}
-            download={`voxcraft-${Date.now()}.wav`}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-brand-500/20 text-brand-300 border border-brand-500/40 hover:bg-brand-500/30 transition-all"
-            title="Download Audio File"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download</span>
-          </a>
+          <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1.5">
+            <a href={audioUrl} download={`voxcraft-${Date.now()}.wav`}>
+              <Download className="w-3.5 h-3.5" />
+              <span>Download</span>
+            </a>
+          </Button>
         </div>
       </div>
 
@@ -142,7 +153,6 @@ export default function AudioWaveformPlayer({
       <div className="h-10 flex items-center justify-between gap-1 mb-3 px-1">
         {Array.from({ length: 48 }).map((_, idx) => {
           const isActive = (idx / 48) * 100 <= progressPercent;
-          // pseudo-random sound bar heights
           const heightFactor = Math.abs(Math.sin((idx + 1) * 0.45) * 0.7 + Math.cos(idx * 0.8) * 0.3);
           const barHeight = Math.max(15, Math.floor(heightFactor * 100));
 
@@ -151,8 +161,8 @@ export default function AudioWaveformPlayer({
               key={idx}
               className={`flex-1 rounded-full transition-all duration-150 ${
                 isActive
-                  ? "bg-brand-400 shadow-sm shadow-brand-400/50"
-                  : "bg-surface-700/60"
+                  ? "bg-primary shadow-xs"
+                  : "bg-muted"
               } ${isPlaying ? "animate-sound-wave" : ""}`}
               style={{
                 height: `${barHeight}%`,
@@ -166,23 +176,26 @@ export default function AudioWaveformPlayer({
       {/* Scrubber & Controls */}
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={restart}
-          className="p-2 text-surface-400 hover:text-white transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           title="Restart audio"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
 
-        <button
+        <Button
+          type="button"
+          size="icon"
           onClick={togglePlay}
-          className="w-10 h-10 rounded-full gradient-brand flex items-center justify-center text-white shadow-md shadow-brand-500/30 hover:scale-105 active:scale-95 transition-all"
+          className="w-9 h-9 rounded-full shadow-xs cursor-pointer"
         >
-          {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
-        </button>
+          {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+        </Button>
 
         {/* Time Slider */}
         <div className="flex-1 flex items-center gap-2.5">
-          <span className="text-xs font-mono text-surface-400 w-9 text-right">
+          <span className="text-xs font-mono text-muted-foreground w-9 text-right">
             {formatDuration(currentTime)}
           </span>
           <input
@@ -192,9 +205,9 @@ export default function AudioWaveformPlayer({
             step={0.05}
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-1.5 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
+            className="flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
           />
-          <span className="text-xs font-mono text-surface-400 w-9">
+          <span className="text-xs font-mono text-muted-foreground w-9">
             {formatDuration(duration)}
           </span>
         </div>

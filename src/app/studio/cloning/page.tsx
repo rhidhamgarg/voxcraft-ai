@@ -3,6 +3,12 @@
 import { useState, useRef } from "react";
 import { Mic2, Upload, Sparkles, Shield, Check, AlertCircle, Loader2, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function VoiceCloningPage() {
   const router = useRouter();
@@ -101,234 +107,260 @@ export default function VoiceCloningPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <PageContainer className="max-w-4xl">
       <div>
-        <div className="flex items-center gap-2 text-brand-400 text-xs font-mono mb-1">
-          <Mic2 className="w-4 h-4" />
-          <span>NEURAL BIOMETRIC VOICE LAB</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Voice Cloning Studio</h1>
-        <p className="text-sm text-surface-400 mt-1">
-          Generate an authentic digital twin of any voice from a short audio recording.
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Mic2 className="w-5 h-5 text-primary" />
+          <span>Voice Cloning Studio</span>
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Generate an authentic digital twin of any voice from a short audio sample or microphone recording.
         </p>
       </div>
 
       {/* Clone Type Selector */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div
+        <Card
           onClick={() => setCloneType("ivc")}
-          className={`glass-panel p-5 rounded-2xl cursor-pointer border transition-all ${
+          className={`cursor-pointer transition-all ${
             cloneType === "ivc"
-              ? "border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/10"
-              : "border-surface-800 hover:border-surface-700"
+              ? "border-primary bg-primary/5 shadow-xs"
+              : "hover:border-foreground/30"
           }`}
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">
-              Instant (IVC)
-            </span>
-            <span className="text-xs font-mono text-emerald-400">Available on All Plans</span>
-          </div>
-          <h3 className="text-base font-bold text-white mb-1">Instant Voice Clone</h3>
-          <p className="text-xs text-surface-400 leading-relaxed">
-            Upload 15–60 seconds of clean speech. Generates zero-shot speaker embeddings ready for immediate synthesis in seconds.
-          </p>
-        </div>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between mb-1">
+              <Badge variant="outline" className="font-mono text-xs">
+                Instant (IVC)
+              </Badge>
+              <Badge variant="success" className="text-[10px]">
+                Available
+              </Badge>
+            </div>
+            <CardTitle className="text-base font-semibold">Zero-Shot Latent Synthesis</CardTitle>
+            <CardDescription className="text-xs">
+              Requires 15 seconds to 2 minutes of clean reference audio. Instant extraction without retraining.
+            </CardDescription>
+          </CardHeader>
+        </Card>
 
-        <div
+        <Card
           onClick={() => setCloneType("pvc")}
-          className={`glass-panel p-5 rounded-2xl cursor-pointer border transition-all ${
+          className={`cursor-pointer transition-all ${
             cloneType === "pvc"
-              ? "border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/10"
-              : "border-surface-800 hover:border-surface-700 opacity-80"
+              ? "border-primary bg-primary/5 shadow-xs"
+              : "hover:border-foreground/30 opacity-75"
           }`}
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Professional (PVC)
-            </span>
-            <span className="text-xs font-mono text-surface-400">Requires Creator Tier</span>
-          </div>
-          <h3 className="text-base font-bold text-white mb-1">Professional Voice Clone</h3>
-          <p className="text-xs text-surface-400 leading-relaxed">
-            Train a dedicated neural vocoder on 30+ minutes of studio recordings. Requires interactive voice verification CAPTCHA.
-          </p>
-        </div>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between mb-1">
+              <Badge variant="outline" className="font-mono text-xs text-amber-500 border-amber-500/30">
+                Professional (PVC)
+              </Badge>
+              <Badge variant="secondary" className="text-[10px]">
+                Creator+
+              </Badge>
+            </div>
+            <CardTitle className="text-base font-semibold">Fine-Tuned Foundation Model</CardTitle>
+            <CardDescription className="text-xs">
+              Requires 30+ minutes of studio-grade WAV samples. Dedicated GPU fine-tuning for ultra-expressive delivery.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Main Cloning Form */}
-      <form onSubmit={handleSubmit} className="glass-panel p-6 rounded-2xl border border-surface-700/80 space-y-6">
-        {/* Sample Audio Input Options */}
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-white">1. Audio Sample Source</label>
-          <p className="text-xs text-surface-400">
-            For best results, record in a quiet room with minimal echo and no background music.
-          </p>
+      <form onSubmit={handleSubmit}>
+        <Card className="space-y-6 p-6">
+          {/* Audio Reference Dropzone */}
+          <div className="space-y-3">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              1. Reference Audio Sample (Minimum 15s)
+            </label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            {/* Record Mic */}
-            <div className="p-5 rounded-xl border border-surface-800 bg-surface-900/60 flex flex-col items-center justify-center text-center space-y-3">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
-                isRecording ? "bg-rose-500 text-white animate-pulse" : "bg-surface-800 text-surface-300"
-              }`}>
-                <Mic2 className="w-6 h-6" />
-              </div>
-
-              {isRecording ? (
-                <div className="space-y-1">
-                  <p className="text-xs font-mono text-rose-400 font-bold">Recording: {recordTime}s</p>
-                  <button
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Record directly */}
+              <div className="p-5 rounded-lg border border-dashed border-border flex flex-col items-center justify-center text-center space-y-3 bg-muted/20">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                    isRecording
+                      ? "bg-destructive text-destructive-foreground animate-pulse shadow-md"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <Mic2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold">
+                    {isRecording ? `Recording... (${recordTime}s)` : "Record Microphone"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Speak clearly at normal cadence.
+                  </p>
+                </div>
+                {isRecording ? (
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="sm"
                     onClick={stopRecording}
-                    className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-500 transition-colors"
                   >
                     Stop Recording
-                  </button>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={startRecording}
+                  >
+                    Start Recording
+                  </Button>
+                )}
+              </div>
+
+              {/* Upload file */}
+              <div className="p-5 rounded-lg border border-dashed border-border flex flex-col items-center justify-center text-center space-y-3 bg-muted/20 relative">
+                <input
+                  type="file"
+                  accept="audio/mp3,audio/wav,audio/m4a"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                  <Upload className="w-5 h-5" />
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-surface-800 text-surface-200 border border-surface-700 hover:text-white hover:border-brand-500 transition-colors"
-                >
-                  {audioBlob ? "Record Again" : "Record via Microphone"}
-                </button>
-              )}
+                <div>
+                  <p className="text-xs font-semibold">Upload Audio File</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    WAV, MP3, or M4A up to 25MB
+                  </p>
+                </div>
+                <Button type="button" variant="outline" size="sm" className="pointer-events-none">
+                  Choose File
+                </Button>
+              </div>
             </div>
 
-            {/* File Upload */}
-            <div className="p-5 rounded-xl border border-dashed border-surface-700 bg-surface-900/40 flex flex-col items-center justify-center text-center space-y-2 relative">
-              <Upload className="w-6 h-6 text-surface-400" />
-              <p className="text-xs font-medium text-surface-300">Drag & drop or browse</p>
-              <p className="text-[11px] text-surface-500">MP3, WAV, M4A up to 25MB</p>
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={handleFileUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            </div>
+            {audioBlob && (
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-xs text-emerald-500">
+                <Check className="w-4 h-4 shrink-0" />
+                <span>Reference sample ready: {audioBlob.size} bytes captured.</span>
+              </div>
+            )}
           </div>
 
-          {audioBlob && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-300">
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>Audio sample captured successfully ({audioBlob.type || "audio file"})</span>
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Metadata Details */}
-        <div className="space-y-4 pt-2 border-t border-surface-800">
-          <label className="text-sm font-semibold text-white">2. Voice Identity Details</label>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1.5">
-              <label className="text-surface-300 font-medium">Voice Name *</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. My Narrator Voice"
-                value={voiceName}
-                onChange={(e) => setVoiceName(e.target.value)}
-                className="w-full px-3.5 py-2 bg-surface-900 border border-surface-700 rounded-xl text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-surface-300 font-medium">Accent / Dialect</label>
-              <input
-                type="text"
-                placeholder="e.g. American, British, Canadian"
-                value={accent}
-                onChange={(e) => setAccent(e.target.value)}
-                className="w-full px-3.5 py-2 bg-surface-900 border border-surface-700 rounded-xl text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-surface-300 font-medium">Primary Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2 bg-surface-900 border border-surface-700 rounded-xl text-white focus:outline-none focus:border-brand-500 text-xs"
-              >
-                <option value="conversational">Conversational</option>
-                <option value="narration">Narration & Audiobooks</option>
-                <option value="characters">Characters & Gaming</option>
-                <option value="social_media">Social Media & Shorts</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-surface-300 font-medium">Gender</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as any)}
-                className="w-full px-3.5 py-2 bg-surface-900 border border-surface-700 rounded-xl text-white focus:outline-none focus:border-brand-500 text-xs"
-              >
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="non-binary">Non-binary</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs text-surface-300 font-medium">Description</label>
-            <textarea
-              rows={2}
-              placeholder="Provide context on ideal usage (e.g. Deep documentary voiceover for sci-fi scripts)..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 bg-surface-900 border border-surface-700 rounded-xl text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 text-xs resize-none"
-            />
-          </div>
-        </div>
-
-        {/* Legal Consent & Verification */}
-        <div className="p-4 rounded-xl bg-surface-900/60 border border-surface-800 space-y-3">
-          <div className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="consent"
-              checked={hasConsent}
-              onChange={(e) => setHasConsent(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded bg-surface-800 border-surface-700 text-brand-500 focus:ring-brand-500"
-            />
-            <label htmlFor="consent" className="text-xs text-surface-300 leading-relaxed cursor-pointer">
-              <span className="font-semibold text-white">Voice Ownership & Safety Verification:</span> I certify that I own this voice or possess full legal authority and explicit written consent from the speaker to synthesize and clone this audio profile.
+          {/* Voice Metadata Fields */}
+          <div className="space-y-4 pt-2 border-t border-border">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              2. Voice Identity & Metadata
             </label>
-          </div>
-        </div>
 
-        {successMessage && (
-          <div className="p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-400" />
-            <span>{successMessage}</span>
-          </div>
-        )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Voice Name</label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="e.g., Sarah Vance (Narrator)"
+                  value={voiceName}
+                  onChange={(e) => setVoiceName(e.target.value)}
+                />
+              </div>
 
-        <button
-          type="submit"
-          disabled={!hasConsent || !voiceName.trim() || isCloning}
-          className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white gradient-brand hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2"
-        >
-          {isCloning ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Generating Voice Latents...</span>
-            </>
-          ) : (
-            <>
-              <span>Create Voice Clone</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="conversational">Conversational</option>
+                  <option value="narration">Narration & Audiobooks</option>
+                  <option value="characters">Characters & Gaming</option>
+                  <option value="social_media">Social Media & Creator</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Gender</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as any)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="non-binary">Non-binary</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Accent</label>
+                <Input
+                  type="text"
+                  placeholder="e.g., American (Pacific Northwest)"
+                  value={accent}
+                  onChange={(e) => setAccent(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Description</label>
+              <Textarea
+                placeholder="Describe vocal characteristics, recommended use cases, and pacing..."
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Consent Checkbox */}
+          <div className="pt-2 border-t border-border space-y-3">
+            <div className="p-3.5 rounded-lg border border-border bg-muted/20 flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="consent"
+                checked={hasConsent}
+                onChange={(e) => setHasConsent(e.target.checked)}
+                className="mt-0.5 rounded border-input text-primary focus:ring-ring cursor-pointer"
+              />
+              <label htmlFor="consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                <span className="font-semibold text-foreground">Voice Ownership & Verification:</span> I confirm that I own all necessary rights to clone this voice, or have obtained explicit written consent from the voice talent in compliance with AI Watermarking & Ethics guidelines.
+              </label>
+            </div>
+          </div>
+
+          {successMessage && (
+            <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-500 flex items-center gap-2">
+              <Check className="w-4 h-4 shrink-0" />
+              <span>{successMessage}</span>
+            </div>
           )}
-        </button>
+
+          <div className="flex justify-end pt-2">
+            <Button
+              type="submit"
+              disabled={!voiceName.trim() || !hasConsent || isCloning}
+              className="gap-2"
+            >
+              {isCloning ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Synthesising Embeddings...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Generate Custom Voice</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
       </form>
-    </div>
+    </PageContainer>
   );
 }

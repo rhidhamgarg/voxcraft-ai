@@ -1,290 +1,589 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { useState } from "react";
 import {
-  Volume2,
   Sparkles,
+  TrendingUp,
+  Volume2,
+  Zap,
+  Layers,
+  Coins,
   Play,
   Pause,
+  Download,
+  Loader2,
   ArrowRight,
-  Mic2,
-  Library,
-  Zap,
-  Globe2,
-  Shield,
-  Layers,
-  ChevronRight,
-  Headphones,
-  Sliders,
+  MicVocal,
+  Radio,
+  Clock,
   CheckCircle2,
+  CreditCard,
 } from "lucide-react";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  CardAction,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice } from "@/types";
 
-export default function HomePage() {
-  const [activeVoice, setActiveVoice] = useState<Voice>(DEFAULT_VOICES[0]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [activeTab, setActiveTab] = useState<"creative" | "agents" | "api">("creative");
+interface GenerationItem {
+  id: string;
+  text: string;
+  voiceName: string;
+  audioUrl: string;
+  duration: number;
+  timestamp: string;
+}
 
-  const toggleSample = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying) {
-      setTimeout(() => setIsPlaying(false), 3000);
+export default function DashboardOverviewPage() {
+  const [selectedVoice, setSelectedVoice] = React.useState<Voice>(DEFAULT_VOICES[0]);
+  const [promptText, setPromptText] = React.useState(
+    "Welcome to VoxCraft AI. Creating hyper-realistic, human-grade voices has never been simpler."
+  );
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [currentAudioUrl, setCurrentAudioUrl] = React.useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [audioElement, setAudioElement] = React.useState<HTMLAudioElement | null>(null);
+  const [recentGenerations, setRecentGenerations] = React.useState<GenerationItem[]>([]);
+
+  // Fetch recent history on mount
+  React.useEffect(() => {
+    async function loadHistory() {
+      try {
+        const res = await fetch("/api/history");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.generations) && data.generations.length > 0) {
+            setRecentGenerations(
+              data.generations.slice(0, 5).map((g: any) => ({
+                id: g.id,
+                text: g.textPrompt || g.text || "Generated speech sample",
+                voiceName: g.voiceName || "Kokoro Voice",
+                audioUrl: g.audioUrl || `/api/audio/${g.id}/download`,
+                duration: g.durationSeconds || 2.4,
+                timestamp: new Date(g.createdAt || Date.now()).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              }))
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch history:", e);
+      }
+    }
+    loadHistory();
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!promptText.trim()) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch("/api/tts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: promptText,
+          voiceId: selectedVoice.id,
+          speed: 1.0,
+          format: "mp3",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate speech");
+      }
+
+      const data = await res.json();
+      setCurrentAudioUrl(data.audioUrl);
+
+      // Play audio automatically
+      if (audioElement) {
+        audioElement.pause();
+      }
+      const audio = new Audio(data.audioUrl);
+      audio.onended = () => setIsPlaying(false);
+      audio.play();
+      setAudioElement(audio);
+      setIsPlaying(true);
+
+      // Prepend to recent list
+      const newItem: GenerationItem = {
+        id: data.id || `gen-${Date.now()}`,
+        text: promptText,
+        voiceName: selectedVoice.name,
+        audioUrl: data.audioUrl,
+        duration: data.durationSeconds || 2.5,
+        timestamp: "Just now",
+      };
+      setRecentGenerations((prev) => [newItem, ...prev.slice(0, 4)]);
+    } catch (err) {
+      console.error(err);
+      alert("Error generating speech. Ensure Kokoro microservice is running.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
+  const handlePlayToggle = (url: string) => {
+    if (audioElement && isPlaying) {
+      audioElement.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    if (audioElement) {
+      audioElement.pause();
+    }
+    const audio = new Audio(url);
+    audio.onended = () => setIsPlaying(false);
+    audio.play();
+    setAudioElement(audio);
+    setIsPlaying(true);
+  };
+
   return (
-    <div className="space-y-24 pb-16">
-      {/* Top Notification Announcement */}
-      <div className="pt-6 px-4 flex justify-center">
-        <Link
-          href="/studio"
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium glass-panel-subtle hover:border-brand-500/50 text-surface-300 transition-all hover:scale-[1.02]"
-        >
-          <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
-          <span className="text-white font-semibold">Vox-4 Ultra Released:</span>
-          <span>Contextual emotion, inline speech tags & 90+ languages</span>
-          <ChevronRight className="w-3.5 h-3.5 text-surface-400" />
-        </Link>
+    <PageContainer>
+      {/* Header bar */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Voice Studio Dashboard</h2>
+          <p className="text-sm text-muted-foreground">
+            Generate lifelike neural audio with Kokoro-82M open weights and local 24kHz synthesis.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/studio/voices">
+              <Volume2 className="mr-1.5 h-3.5 w-3.5" />
+              Voice Catalog
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/studio">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              Open Full Studio
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Hero Section */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
-            Bringing <span className="gradient-text">technology</span> to life
-          </h1>
-          <p className="text-base sm:text-xl text-surface-400 max-w-2xl mx-auto leading-relaxed">
-            Generate human-grade AI speech, clone authentic voices from seconds of audio, and deploy real-time conversational voice agents with sub-250ms latency.
-          </p>
-        </div>
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="history">Activity Log</TabsTrigger>
+          <TabsTrigger value="models">Active Models</TabsTrigger>
+        </TabsList>
 
-        {/* CTA Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <Link
-            href="/studio"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-semibold text-white gradient-brand hover:brightness-110 shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2.5 text-sm sm:text-base"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Open Studio for Free</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Top 4 Stat Metric Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription>Total Generated</CardDescription>
+                <CardAction>
+                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
+                    <TrendingUp className="h-3 w-3 text-emerald-500" />
+                    +18.2%
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="text-2xl font-bold tabular-nums">48,250</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Characters synthesised</p>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground pt-0">
+                128 audio tracks exported
+              </CardFooter>
+            </Card>
 
-          <Link
-            href="/studio/voices"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-semibold text-surface-200 glass-panel hover:text-white hover:border-surface-600 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
-          >
-            <Library className="w-4 h-4 text-brand-400" />
-            <span>Explore 17,500+ Voices</span>
-          </Link>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription>Kokoro Latency</CardDescription>
+                <CardAction>
+                  <Badge variant="success" className="gap-1 font-mono text-[10px]">
+                    <Zap className="h-3 w-3" />
+                    Sub-second
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="text-2xl font-bold tabular-nums">840 ms</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Mean inference time</p>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground pt-0">
+                24kHz HiFi-GAN Vocoder
+              </CardFooter>
+            </Card>
 
-        {/* Live Audio Playground Sandbox */}
-        <div className="pt-6 max-w-3xl mx-auto">
-          <div className="glass-panel p-6 rounded-3xl border border-surface-700/80 shadow-2xl space-y-5 text-left">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-surface-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-semibold text-white uppercase tracking-wider font-mono">Interactive Speech Sandbox</span>
-              </div>
-              <span className="text-xs text-surface-400">Model: Vox-4 Ultra</span>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription>Active Voices</CardDescription>
+                <CardAction>
+                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
+                    <Layers className="h-3 w-3 text-blue-500" />
+                    v0.19
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="text-2xl font-bold tabular-nums">18 Voices</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Curated neural models</p>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground pt-0">
+                Zero per-minute cost
+              </CardFooter>
+            </Card>
 
-            {/* Script sample quote */}
-            <div className="p-4 rounded-2xl bg-surface-950/60 border border-surface-800/80">
-              <p className="text-sm sm:text-base text-surface-200 leading-relaxed font-sans">
-                "{activeVoice.sampleText}"
-              </p>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardDescription>Remaining Credits</CardDescription>
+                <CardAction>
+                  <Badge variant="outline" className="gap-1 font-mono text-[10px]">
+                    <Coins className="h-3 w-3 text-amber-500" />
+                    Active
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <CardTitle className="text-2xl font-bold tabular-nums">12,500</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Characters available</p>
+              </CardContent>
+              <CardFooter className="text-xs text-muted-foreground pt-0">
+                Renews automatically in 18d
+              </CardFooter>
+            </Card>
+          </div>
 
-            {/* Voice switcher chips & Player */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                {DEFAULT_VOICES.slice(0, 4).map((voice) => (
-                  <button
-                    key={voice.id}
-                    onClick={() => {
-                      setActiveVoice(voice);
-                      setIsPlaying(false);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                      activeVoice.id === voice.id
-                        ? "bg-brand-500 text-white shadow-md shadow-brand-500/20"
-                        : "bg-surface-900 text-surface-400 hover:text-white border border-surface-800"
-                    }`}
+          {/* Main Grid: Playground & Activity */}
+          <div className="grid gap-6 lg:grid-cols-12">
+            {/* Quick Speech Playground */}
+            <Card className="lg:col-span-7 flex flex-col justify-between">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Quick TTS Playground</CardTitle>
+                    <CardDescription>
+                      Test prompts directly with the Kokoro neural vocoder.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    Model: Kokoro-82M
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Voice Selection Chips */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Select Voice</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DEFAULT_VOICES.slice(0, 5).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setSelectedVoice(v)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                          selectedVoice.id === v.id
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                        }`}
+                      >
+                        <Radio className="h-3 w-3" />
+                        <span>{v.name}</span>
+                        <span className="opacity-70 text-[10px]">({v.accent})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Text prompt area */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Input Text Prompt</span>
+                    <span className="font-mono">{promptText.length} chars</span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={promptText}
+                    onChange={(e) => setPromptText(e.target.value)}
+                    placeholder="Enter text to convert to speech..."
+                    className="w-full rounded-md border border-input bg-transparent p-3 text-sm shadow-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+
+                {/* Active Audio Output Player */}
+                {currentAudioUrl && (
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border/80 bg-muted/30 animate-in fade-in-50">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => handlePlayToggle(currentAudioUrl)}
+                      >
+                        {isPlaying ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4 ml-0.5" />
+                        )}
+                      </Button>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">Generated Speech</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {selectedVoice.name} · 24kHz Audio
+                        </span>
+                      </div>
+                    </div>
+                    <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5 text-xs">
+                      <a href={currentAudioUrl} download="speech.mp3">
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+
+              <CardFooter className="border-t border-border/40 pt-4 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Sub-second latency (0.8s) · Local microservice
+                </span>
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !promptText.trim()}
+                  className="gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Synthesising...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Generate Audio
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Recent Generations Activity Feed */}
+            <Card className="lg:col-span-5 flex flex-col justify-between">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Recent Generations</CardTitle>
+                    <CardDescription>Latest speech files created in your studio.</CardDescription>
+                  </div>
+                  <Link
+                    href="/studio"
+                    className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
                   >
-                    {voice.name.split(" ")[0]} ({voice.category.slice(0, 4)})
-                  </button>
+                    View all <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {recentGenerations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                    <Volume2 className="h-8 w-8 mb-2 opacity-40" />
+                    <p className="text-sm font-medium">No generations recorded yet</p>
+                    <p className="text-xs">Type a prompt in the playground to create your first track.</p>
+                  </div>
+                ) : (
+                  recentGenerations.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border/60 hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 shrink-0 rounded-full bg-muted/60"
+                          onClick={() => handlePlayToggle(item.audioUrl)}
+                        >
+                          <Play className="h-3.5 w-3.5 ml-0.5 text-foreground" />
+                        </Button>
+                        <div className="flex flex-col min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate max-w-[200px]">
+                            {item.text}
+                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <span>{item.voiceName}</span>
+                            <span>·</span>
+                            <span>{item.duration}s</span>
+                            <span>·</span>
+                            <span>{item.timestamp}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button asChild size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground">
+                        <a href={item.audioUrl} download={`${item.id}.mp3`}>
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+
+              <CardFooter className="border-t border-border/40 pt-4">
+                <Button asChild variant="outline" className="w-full text-xs">
+                  <Link href="/studio">Open TTS Studio</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+
+          {/* Quick Platform Workflows */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Link href="/studio" className="group">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+                <CardHeader>
+                  <Sparkles className="h-5 w-5 text-primary mb-2" />
+                  <CardTitle className="text-sm font-semibold">TTS Studio</CardTitle>
+                  <CardDescription className="text-xs">
+                    Full vocal parameter control, speech pacing, emotion tags and instant preview.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+
+            <Link href="/studio/voices" className="group">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+                <CardHeader>
+                  <Volume2 className="h-5 w-5 text-blue-500 mb-2" />
+                  <CardTitle className="text-sm font-semibold">Voice Catalog</CardTitle>
+                  <CardDescription className="text-xs">
+                    Browse 18 curated high-fidelity neural voices across styles and accents.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+
+            <Link href="/studio/cloning" className="group">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+                <CardHeader>
+                  <MicVocal className="h-5 w-5 text-emerald-500 mb-2" />
+                  <CardTitle className="text-sm font-semibold">Voice Cloning</CardTitle>
+                  <CardDescription className="text-xs">
+                    Synthesise custom voice embeddings from a 15-second audio sample.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+
+            <Link href="/pricing" className="group">
+              <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
+                <CardHeader>
+                  <CreditCard className="h-5 w-5 text-amber-500 mb-2" />
+                  <CardTitle className="text-sm font-semibold">Plans & Scaling</CardTitle>
+                  <CardDescription className="text-xs">
+                    Explore credit packs, commercial rights, and dedicated GPU worker clusters.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          </div>
+        </TabsContent>
+
+        {/* Activity Log Tab */}
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Full Synthesis Activity</CardTitle>
+              <CardDescription>Audit log of all neural speech synthesis requests.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentGenerations.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border/60"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full bg-muted"
+                        onClick={() => handlePlayToggle(item.audioUrl)}
+                      >
+                        <Play className="h-3.5 w-3.5 ml-0.5" />
+                      </Button>
+                      <div>
+                        <p className="text-xs font-medium">{item.text}</p>
+                        <span className="text-[11px] text-muted-foreground">
+                          Voice: {item.voiceName} · Latency: 0.84s · {item.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="font-mono text-[10px]">
+                      200 OK
+                    </Badge>
+                  </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <button
-                onClick={toggleSample}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white gradient-brand hover:brightness-110 shadow-md shadow-brand-500/20 transition-all self-end sm:self-auto"
-              >
-                {isPlaying ? <Pause className="w-3.5 h-3.5 fill-white" /> : <Play className="w-3.5 h-3.5 fill-white ml-0.5" />}
-                <span>{isPlaying ? "Playing Sample..." : "Listen to Sample"}</span>
-              </button>
-            </div>
+        {/* Active Models Tab */}
+        <TabsContent value="models" className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <Badge variant="success" className="w-fit text-[10px] mb-1">
+                  Active
+                </Badge>
+                <CardTitle className="text-sm font-semibold">Kokoro-82M</CardTitle>
+                <CardDescription className="text-xs">
+                  82 million parameter Apache-2.0 open-weights model running locally at 24kHz.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Badge variant="secondary" className="w-fit text-[10px] mb-1">
+                  Standby
+                </Badge>
+                <CardTitle className="text-sm font-semibold">Deepgram Aura</CardTitle>
+                <CardDescription className="text-xs">
+                  Ultra-low latency streaming cloud fallback for conversational voice agents.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Badge variant="secondary" className="w-fit text-[10px] mb-1">
+                  Standby
+                </Badge>
+                <CardTitle className="text-sm font-semibold">OpenAI TTS-1-HD</CardTitle>
+                <CardDescription className="text-xs">
+                  Enterprise-grade multi-lingual neural speech generation provider.
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
-        </div>
-      </section>
-
-      {/* Social Proof / Enterprise Logos */}
-      <section className="max-w-6xl mx-auto px-4 text-center space-y-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-surface-500 font-mono">
-          Trusted by next-generation studios, creators, and platforms
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60 grayscale hover:grayscale-0 transition-all">
-          <span className="text-lg font-bold text-white tracking-widest font-mono">DUOLINGO</span>
-          <span className="text-lg font-bold text-white tracking-widest font-mono">NVIDIA</span>
-          <span className="text-lg font-bold text-white tracking-widest font-mono">DISNEY</span>
-          <span className="text-lg font-bold text-white tracking-widest font-mono">PERPLEXITY</span>
-          <span className="text-lg font-bold text-white tracking-widest font-mono">RAZORPAY</span>
-        </div>
-      </section>
-
-      {/* Product Suite Deep-Dive Tabs */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
-        <div className="text-center space-y-3">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            One Research Engine. Endless Applications.
-          </h2>
-          <p className="text-sm sm:text-base text-surface-400 max-w-xl mx-auto">
-            From expressive creator media to autonomous conversational AI agents.
-          </p>
-        </div>
-
-        {/* 3 Pillar Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pillar 1: TTS Studio */}
-          <div className="glass-panel p-6 rounded-3xl border border-surface-700/80 space-y-4 hover:border-brand-500/50 transition-all group">
-            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Text to Speech Studio</h3>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Transform written text into nuanced speech. Control vocal stability, pacing, style exaggeration, and insert emotional markup like whispers and laughs.
-            </p>
-            <Link href="/studio" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-400 hover:text-brand-300">
-              <span>Open TTS Studio</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Pillar 2: Voice Cloning */}
-          <div className="glass-panel p-6 rounded-3xl border border-surface-700/80 space-y-4 hover:border-brand-500/50 transition-all group">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-              <Mic2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Instant Voice Cloning</h3>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Upload a 15-second microphone sample to extract zero-shot latent acoustic embeddings. Replicate your voice instantly with full privacy verification.
-            </p>
-            <Link href="/studio/cloning" className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300">
-              <span>Try Voice Cloning</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Pillar 3: Realtime API */}
-          <div className="glass-panel p-6 rounded-3xl border border-surface-700/80 space-y-4 hover:border-brand-500/50 transition-all group">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Sub-250ms Audio API</h3>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Real-time WebSocket audio streaming engineered for interactive conversational bots, call center agents, NPC game dialog, and dynamic localization.
-            </p>
-            <Link href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300">
-              <span>View API Tiers</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-surface-700/80 space-y-8">
-          <div className="max-w-2xl space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Built for Production Reliability</h2>
-            <p className="text-xs sm:text-sm text-surface-400">Enterprise security, multi-language coverage, and low-latency infrastructure.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <Globe2 className="w-4 h-4 text-brand-400" />
-                <span>90+ Language Coverage</span>
-              </div>
-              <p className="text-xs text-surface-400">Native phoneme accuracy across European, Asian, and Middle Eastern dialects.</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <Sliders className="w-4 h-4 text-brand-400" />
-                <span>Micro-Prosody Control</span>
-              </div>
-              <p className="text-xs text-surface-400">Granular sliders for stability, similarity boost, style exaggeration, and playback speed.</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <Shield className="w-4 h-4 text-brand-400" />
-                <span>Biometric Voice CAPTCHA</span>
-              </div>
-              <p className="text-xs text-surface-400">Mandatory vocal consent verification ensures ethical cloning without deepfake abuse.</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <Headphones className="w-4 h-4 text-brand-400" />
-                <span>44.1kHz PCM Studio Audio</span>
-              </div>
-              <p className="text-xs text-surface-400">Uncompressed broadcast-ready audio output for television, audiobooks, and film.</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <Layers className="w-4 h-4 text-brand-400" />
-                <span>Deduplicated Audio Cache</span>
-              </div>
-              <p className="text-xs text-surface-400">Intelligent hash caching reduces API expenses by serving repeated clips from zero-cost storage.</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white font-semibold text-sm">
-                <CheckCircle2 className="w-4 h-4 text-brand-400" />
-                <span>Worldwide Commercial Rights</span>
-              </div>
-              <p className="text-xs text-surface-400">Every paid tier includes perpetual commercial monetization rights across all platforms.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom CTA Banner */}
-      <section className="max-w-5xl mx-auto px-4 text-center">
-        <div className="glass-panel p-10 sm:p-14 rounded-3xl border border-brand-500/40 bg-gradient-to-b from-brand-950/40 via-surface-900/60 to-surface-950/80 shadow-2xl space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Ready to bring your words to life?
-          </h2>
-          <p className="text-sm text-surface-300 max-w-xl mx-auto leading-relaxed">
-            Start synthesizing with 10,000 free credits today. No credit card required.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/studio"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white gradient-brand hover:brightness-110 shadow-lg shadow-brand-500/30 transition-all text-sm sm:text-base"
-            >
-              <span>Launch VoxCraft Studio</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+        </TabsContent>
+      </Tabs>
+    </PageContainer>
   );
 }

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Voice, VoiceCategory } from "@/types";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
-import { Search, X, Filter } from "lucide-react";
+import { Search, X } from "lucide-react";
 import VoiceCard from "./VoiceCard";
+import { Button } from "@/components/ui/button";
 
 interface VoiceSelectorModalProps {
   isOpen: boolean;
@@ -42,80 +43,72 @@ export default function VoiceSelectorModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-4xl max-h-[85vh] glass-panel rounded-2xl border border-surface-700/80 shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in-50">
+      <div className="w-full max-w-4xl max-h-[85vh] rounded-xl border border-border bg-card text-card-foreground shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-5 border-b border-surface-800 flex items-center justify-between">
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">Select an AI Voice</h2>
-            <p className="text-xs text-surface-400">Choose from 17,500+ curated voices and custom clones</p>
+            <h2 className="text-base font-semibold tracking-tight">Select an AI Voice</h2>
+            <p className="text-xs text-muted-foreground">Choose from curated open-weight voices and custom clones</p>
           </div>
-          <button
+          <Button
+            size="icon"
+            variant="ghost"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
+            className="h-8 w-8 text-muted-foreground"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
-        {/* Filters & Search */}
-        <div className="p-4 border-b border-surface-800/80 bg-surface-950/40 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-surface-400" />
+        {/* Toolbar */}
+        <div className="p-4 border-b border-border bg-muted/20 space-y-3">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by name, accent (British, American), or use-case..."
+              placeholder="Search by voice name, accent, or style tags..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-surface-900 border border-surface-700 rounded-xl text-xs sm:text-sm text-white placeholder-surface-500 focus:outline-none focus:border-brand-500 transition-colors"
+              className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {categories.map((cat) => (
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            {categories.map((c) => (
               <button
-                key={cat.id}
-                onClick={() => setCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                  category === cat.id
-                    ? "bg-brand-500 text-white shadow-sm"
-                    : "bg-surface-900 text-surface-400 hover:text-white hover:bg-surface-800 border border-surface-800"
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c.id)}
+                className={`px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                  category === c.id
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
                 }`}
               >
-                {cat.label}
+                {c.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Voices Grid */}
-        <div className="p-5 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Voice Cards Grid */}
+        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {filteredVoices.map((voice) => (
             <VoiceCard
               key={voice.id}
               voice={voice}
               isSelected={selectedVoice.id === voice.id}
-              onSelect={(v) => {
-                onSelectVoice(v);
-                onClose();
-              }}
+              onSelect={onSelectVoice}
             />
           ))}
+        </div>
 
-          {filteredVoices.length === 0 && (
-            <div className="col-span-2 py-12 text-center text-surface-400">
-              <p className="text-sm">No voices match your search query.</p>
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setCategory("all");
-                }}
-                className="mt-2 text-xs text-brand-400 hover:underline"
-              >
-                Reset filters
-              </button>
-            </div>
-          )}
+        {/* Footer */}
+        <div className="p-3 border-t border-border bg-muted/10 flex justify-end">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
         </div>
       </div>
     </div>

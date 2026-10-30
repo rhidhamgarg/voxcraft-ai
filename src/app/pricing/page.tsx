@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { Check, Sparkles, Zap, Shield, HelpCircle, ArrowRight, Coins } from "lucide-react";
 import Link from "next/link";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [minutesUsage, setMinutesUsage] = useState(60);
 
   const plans = [
     {
@@ -19,7 +22,7 @@ export default function PricingPage() {
       features: [
         "Text to Speech & Speech to Text",
         "Access to standard voice library",
-        "API access with rate limits",
+        "API access with standard rate limits",
         "3 Projects in Studio",
         "Non-commercial attribution required",
       ],
@@ -40,7 +43,6 @@ export default function PricingPage() {
         "Commercial License included",
         "Instant Voice Cloning (IVC)",
         "20 Projects in Studio",
-        "Dubbing Studio access",
         "Standard support",
       ],
       cta: "Choose Starter",
@@ -74,182 +76,118 @@ export default function PricingPage() {
       credits: "600,000 credits/mo (~10 hours)",
       features: [
         "Everything in Creator, plus:",
-        "44.1kHz uncompressed PCM WAV output",
-        "192kbps studio audio exports",
+        "24kHz / 44.1kHz lossless WAV output",
         "Elevated API concurrency",
         "Unlimited Studio projects",
-        "Priority VIP support",
+        "Dedicated account manager",
       ],
       cta: "Choose Pro",
       isPopular: false,
     },
   ];
 
-  // Dynamic recommendation based on slider
-  const recommendedPlan =
-    minutesUsage <= 10 ? "Free" : minutesUsage <= 30 ? "Starter" : minutesUsage <= 120 ? "Creator" : "Pro";
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    <PageContainer>
       {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-300 border border-brand-500/30">
-          <Sparkles className="w-3.5 h-3.5 text-brand-400" />
-          <span>FLEXIBLE TRANSPARENT PRICING</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-          Scale your voice production effortlessly
+      <div className="text-center max-w-2xl mx-auto space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Predictable Pricing for Neural Voice Generation
         </h1>
-        <p className="text-sm sm:text-base text-surface-400 leading-relaxed">
-          From independent creators to global enterprise studios, choose a plan tailored to your generative audio demands.
+        <p className="text-sm text-muted-foreground">
+          Start for free, test locally with Kokoro-82M, and scale seamlessly with dedicated GPU inference clusters.
         </p>
 
-        {/* Annual / Monthly Toggle */}
-        <div className="pt-4 flex items-center justify-center gap-3">
-          <span className={`text-xs sm:text-sm font-medium ${!isAnnual ? "text-white" : "text-surface-400"}`}>
+        {/* Billing Switcher */}
+        <div className="flex items-center justify-center gap-3 pt-3">
+          <span
+            className={`text-xs font-medium cursor-pointer ${
+              !isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
+            }`}
+            onClick={() => setIsAnnual(false)}
+          >
             Monthly Billing
           </span>
           <button
+            type="button"
             onClick={() => setIsAnnual(!isAnnual)}
-            className="w-12 h-6 rounded-full bg-surface-800 p-1 relative border border-surface-700 transition-colors"
+            className="w-11 h-6 rounded-full bg-muted border border-border p-0.5 transition-colors relative cursor-pointer"
           >
             <div
-              className={`w-4 h-4 rounded-full gradient-brand transition-transform ${
-                isAnnual ? "translate-x-6" : "translate-x-0"
+              className={`w-4 h-4 rounded-full bg-primary transition-transform ${
+                isAnnual ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>
-          <span className={`text-xs sm:text-sm font-medium ${isAnnual ? "text-white" : "text-surface-400"}`}>
-            Annual Billing <span className="text-[11px] font-bold text-emerald-400 font-mono">(Save 20%)</span>
+          <span
+            className={`text-xs font-medium cursor-pointer flex items-center gap-1.5 ${
+              isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
+            }`}
+            onClick={() => setIsAnnual(true)}
+          >
+            Annual Billing
+            <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">
+              Save 20%
+            </Badge>
           </span>
         </div>
       </div>
 
       {/* Pricing Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
         {plans.map((plan) => (
-          <div
+          <Card
             key={plan.id}
-            className={`glass-panel p-6 rounded-2xl flex flex-col justify-between border relative transition-all ${
-              plan.isPopular
-                ? "border-brand-500 bg-brand-500/10 shadow-xl shadow-brand-500/15"
-                : "border-surface-800 hover:border-surface-700"
+            className={`flex flex-col justify-between relative ${
+              plan.isPopular ? "border-primary shadow-md" : ""
             }`}
           >
             {plan.isPopular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-500 text-white shadow-md">
-                Most Popular
-              </span>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge variant="default" className="text-[10px] px-2.5 py-0.5">
+                  Most Popular
+                </Badge>
+              </div>
             )}
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                {plan.promoText && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    {plan.promoText}
-                  </span>
-                )}
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">{plan.name}</CardTitle>
+              <CardDescription className="text-xs">{plan.description}</CardDescription>
+              <div className="pt-3 pb-1">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
+                  <span className="text-xs text-muted-foreground">{plan.period}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-mono">
+                  <Coins className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{plan.credits}</span>
+                </div>
               </div>
+            </CardHeader>
 
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-3xl font-extrabold text-white tracking-tight">{plan.price}</span>
-                <span className="text-xs text-surface-400">{plan.period}</span>
-              </div>
+            <CardContent className="space-y-2.5 flex-1 border-t border-border/40 pt-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Features included:
+              </p>
+              {plan.features.map((feature, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-muted-foreground">{feature}</span>
+                </div>
+              ))}
+            </CardContent>
 
-              <p className="text-xs text-surface-400 mb-4 min-h-[32px]">{plan.description}</p>
-
-              <div className="p-2.5 rounded-xl bg-surface-900/80 border border-surface-800 text-xs font-mono text-brand-300 mb-6 flex items-center gap-2">
-                <Coins className="w-3.5 h-3.5 text-amber-400" />
-                <span>{plan.credits}</span>
-              </div>
-
-              <ul className="space-y-2.5 text-xs text-surface-300 mb-6">
-                {plan.features.map((feat, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <Link
-              href="/studio"
-              className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-center transition-all ${
-                plan.isPopular
-                  ? "gradient-brand text-white hover:brightness-110 shadow-md shadow-brand-500/30"
-                  : "bg-surface-800 text-surface-200 hover:bg-surface-700 hover:text-white border border-surface-700"
-              }`}
-            >
-              {plan.cta}
-            </Link>
-          </div>
+            <CardFooter className="pt-4 border-t border-border/40">
+              <Button
+                asChild
+                variant={plan.isPopular ? "default" : "outline"}
+                className="w-full text-xs font-medium"
+              >
+                <Link href="/studio">{plan.cta}</Link>
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
-
-      {/* Interactive Usage Calculator */}
-      <div className="glass-panel p-8 rounded-3xl border border-surface-700/80 max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Interactive Usage Estimator</h3>
-            <p className="text-xs text-surface-400">Slide to estimate your monthly audio requirements</p>
-          </div>
-          <div className="px-4 py-2 rounded-xl bg-surface-900 border border-surface-800 flex items-center gap-2 text-xs">
-            <span className="text-surface-400">Recommended:</span>
-            <span className="font-bold text-brand-400">{recommendedPlan} Tier</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs font-mono text-surface-300">
-            <span>Estimated Generation Time</span>
-            <span className="text-base font-bold text-white">{minutesUsage} Minutes / Month</span>
-          </div>
-          <input
-            type="range"
-            min="5"
-            max="600"
-            step="5"
-            value={minutesUsage}
-            onChange={(e) => setMinutesUsage(parseInt(e.target.value))}
-            className="w-full h-2 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
-          />
-          <div className="flex justify-between text-[11px] font-mono text-surface-500">
-            <span>5 mins</span>
-            <span>60 mins (1 hr)</span>
-            <span>300 mins (5 hrs)</span>
-            <span>600 mins (10 hrs)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Section */}
-      <div className="max-w-3xl mx-auto space-y-6 pt-8">
-        <h2 className="text-2xl font-bold text-white text-center tracking-tight">Frequently Asked Questions</h2>
-        <div className="space-y-4">
-          <div className="glass-panel p-5 rounded-2xl border border-surface-800 space-y-2">
-            <h4 className="text-sm font-semibold text-white">Do I own the commercial rights to generated speech?</h4>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Yes. All audio generated under Starter, Creator, Pro, and Enterprise tiers includes a worldwide commercial license for YouTube, podcasts, games, ads, and broadcast.
-            </p>
-          </div>
-
-          <div className="glass-panel p-5 rounded-2xl border border-surface-800 space-y-2">
-            <h4 className="text-sm font-semibold text-white">How does Instant Voice Cloning work?</h4>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Instant Voice Cloning (IVC) extracts acoustic speaker latent embeddings from a 15–60 second sample. It does not train a full model from scratch, so it is ready within seconds.
-            </p>
-          </div>
-
-          <div className="glass-panel p-5 rounded-2xl border border-surface-800 space-y-2">
-            <h4 className="text-sm font-semibold text-white">Can I cancel or change my plan anytime?</h4>
-            <p className="text-xs text-surface-400 leading-relaxed">
-              Absolutely. Subscriptions are billed month-to-month and can be paused or cancelled at any time directly from your billing settings.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

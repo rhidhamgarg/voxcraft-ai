@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/layout/app-sidebar";
+import Header from "@/components/layout/header";
 
 export const metadata: Metadata = {
-  title: "VoxCraft AI — Neural Voice Generation & Conversational Voice Platform",
+  title: "VoxCraft AI — Neural Audio & Speech Studio",
   description:
-    "Generate hyper-realistic speech, clone authentic voices from seconds of audio, and explore 17,500+ curated voices across 90+ languages with sub-250ms latency.",
+    "Generate hyper-realistic speech, clone authentic voices, and explore curated neural voices with sub-second Kokoro-82M synthesis.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -19,10 +20,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-brand-500/30 selection:text-brand-200">
-        <Navbar />
-        <div className="flex-1">{children}</div>
-        <Footer />
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+        <SidebarProvider defaultOpen={true}>
+          <AppSidebar />
+          <SidebarInset>
+            <Header />
+            <div className="flex-1 overflow-x-hidden">{children}</div>
+          </SidebarInset>
+        </SidebarProvider>
       </body>
     </html>
   );

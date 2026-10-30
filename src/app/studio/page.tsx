@@ -1,12 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Sparkles,
+  Sliders,
+  Play,
+  Loader2,
+  Wand2,
+  History,
+  RotateCcw,
+  Copy,
+  Check,
+  ChevronDown,
+  Download,
+  AlertTriangle,
+  Coins,
+  Trash2,
+  Volume2,
+  Radio,
+} from "lucide-react";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice, GenerationSettings, GenerationHistoryItem } from "@/types";
-import { Sparkles, Sliders, Play, Loader2, Wand2, History, RotateCcw, Copy, Check, ChevronDown, Download, AlertTriangle, Coins, Trash2 } from "lucide-react";
 import VoiceSelectorModal from "@/components/VoiceSelectorModal";
 import AudioWaveformPlayer from "@/components/AudioWaveformPlayer";
-import Link from "next/link";
 
 export default function StudioPage() {
   const [selectedVoice, setSelectedVoice] = useState<Voice>(DEFAULT_VOICES[0]);
@@ -140,98 +168,104 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-surface-800">
+    <PageContainer>
+      {/* Header bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-brand-400" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
             <span>Text to Speech Studio</span>
           </h1>
-          <p className="text-xs sm:text-sm text-surface-400">
+          <p className="text-sm text-muted-foreground">
             Convert natural language into human-grade spoken audio with contextual emotion control.
           </p>
         </div>
 
         {/* Model Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-surface-400">Engine:</span>
+          <span className="text-xs font-mono text-muted-foreground">Engine:</span>
           <select
             value={modelId}
             onChange={(e) => setModelId(e.target.value)}
-            className="px-3 py-1.5 bg-surface-900 border border-surface-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-brand-500"
+            className="h-8 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
-            <option value="vox_v4_ultra">Vox-4 Ultra (Contextual Emotion)</option>
+            <option value="vox_v4_ultra">Kokoro-82M (Local Vocoder 24kHz)</option>
             <option value="vox_v3_multilingual">Vox-3 Multilingual (32+ Languages)</option>
             <option value="vox_turbo_v2">Turbo Realtime (Sub-250ms Latency)</option>
           </select>
         </div>
       </div>
 
-      {/* Quota Depletion Alert Modal */}
+      {/* Quota Depletion Alert */}
       {quotaError && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 animate-fade-in">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-            <div>
-              <p className="text-xs font-semibold text-rose-200">
-                Insufficient generation credits (Need: {quotaError.required}, Available: {quotaError.available})
-              </p>
-              <p className="text-[11px] text-surface-400">
-                Upgrade your subscription to keep synthesizing speech without interruption.
-              </p>
+        <Card className="border-destructive/40 bg-destructive/10">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-destructive">
+                  Insufficient generation credits (Need: {quotaError.required}, Available: {quotaError.available})
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Upgrade your subscription to keep synthesizing speech without interruption.
+                </p>
+              </div>
             </div>
-          </div>
-          <Link
-            href="/pricing"
-            className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-500 transition-colors shrink-0"
-          >
-            Upgrade Plan
-          </Link>
-        </div>
+            <Button asChild size="sm" variant="destructive">
+              <Link href="/pricing">Upgrade Plan</Link>
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Editor Section (2 cols) */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Active Voice Bar */}
-          <div className="glass-panel p-3.5 rounded-2xl flex items-center justify-between gap-3 border border-surface-700/80">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                {selectedVoice.name.charAt(0)}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">{selectedVoice.name}</h3>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-800 text-surface-400 border border-surface-700">
-                    {selectedVoice.category}
-                  </span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main Editor Section (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Active Voice Card */}
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs">
+                  {selectedVoice.name.charAt(0)}
                 </div>
-                <p className="text-xs text-surface-400">{selectedVoice.accent} · {selectedVoice.gender}</p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold">{selectedVoice.name}</h3>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      {selectedVoice.category}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedVoice.accent} · {selectedVoice.gender}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => setIsVoiceModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-surface-200 border border-surface-700 hover:text-white hover:border-brand-500 transition-all flex items-center gap-1.5"
-            >
-              <span>Change Voice</span>
-              <ChevronDown className="w-3.5 h-3.5 text-surface-400" />
-            </button>
-          </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsVoiceModalOpen(true)}
+                className="gap-1.5 text-xs"
+              >
+                <span>Change Voice</span>
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Script Textarea Card */}
-          <div className="glass-panel rounded-2xl border border-surface-700/80 overflow-hidden shadow-xl">
+          <Card className="overflow-hidden">
             {/* Emotion Chips Bar */}
-            <div className="p-3 border-b border-surface-800 bg-surface-950/40 flex items-center gap-1.5 overflow-x-auto text-xs">
-              <span className="text-[11px] text-surface-400 font-medium whitespace-nowrap mr-1 flex items-center gap-1">
-                <Wand2 className="w-3 h-3 text-brand-400" /> Emotion Tags:
+            <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-1.5 overflow-x-auto text-xs">
+              <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap mr-1 flex items-center gap-1">
+                <Wand2 className="w-3 h-3 text-primary" /> Emotion Tags:
               </span>
               {emotionTags.map((et) => (
                 <button
                   key={et.label}
+                  type="button"
                   onClick={() => insertTag(et.tag)}
-                  className="px-2 py-0.5 rounded-md bg-surface-900 border border-surface-800 text-surface-400 hover:text-brand-300 hover:border-brand-500/40 text-[11px] font-mono whitespace-nowrap transition-colors"
+                  className="px-2 py-0.5 rounded border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50 text-[11px] font-mono whitespace-nowrap transition-colors cursor-pointer"
                 >
                   {et.tag.trim()}
                 </button>
@@ -239,244 +273,274 @@ export default function StudioPage() {
             </div>
 
             {/* Input area */}
-            <div className="p-4">
+            <CardContent className="p-4">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type or paste your script here. Use inline markup like [whispers] or [laughs] to guide vocal emotion..."
-                rows={7}
-                className="w-full bg-transparent text-white text-sm sm:text-base leading-relaxed placeholder-surface-500 focus:outline-none resize-none font-sans"
+                rows={8}
+                className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground focus:outline-none resize-none"
               />
-            </div>
+            </CardContent>
 
-            {/* Footer Toolbar */}
-            <div className="px-4 py-3 border-t border-surface-800 bg-surface-950/60 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs text-surface-400 font-mono">
-                <span>{characterCount} / {maxCharacters} chars</span>
-                <span>·</span>
-                <span>~{Math.max(1, Math.round(characterCount / 18))}s audio</span>
+            {/* Bottom Bar inside Card */}
+            <CardFooter className="flex items-center justify-between border-t border-border px-4 py-3 bg-muted/10">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="font-mono">
+                  {characterCount} / {maxCharacters} chars
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="hover:text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>{showAdvanced ? "Hide Advanced" : "Voice Settings"}</span>
+                </button>
               </div>
 
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                    showAdvanced
-                      ? "bg-brand-500/10 text-brand-300 border-brand-500/40"
-                      : "bg-surface-900 text-surface-400 border-surface-700 hover:text-white"
-                  }`}
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>Voice Settings</span>
-                </button>
-
-                <button
+                <Button
                   onClick={handleGenerate}
-                  disabled={isGenerating || characterCount === 0}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white gradient-brand hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand-500/25 transition-all"
+                  disabled={isGenerating || !text.trim()}
+                  className="gap-2"
                 >
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Synthesizing...</span>
+                      <span>Synthesising...</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 fill-white" />
+                      <Sparkles className="w-4 h-4" />
                       <span>Generate Speech</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
 
-          {/* Voice Tuning Sliders Drawer */}
+          {/* Advanced Sliders Drawer */}
           {showAdvanced && (
-            <div className="glass-panel p-5 rounded-2xl border border-surface-700/80 space-y-4 animate-fade-in">
-              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-brand-400" />
-                <span>Neural Voice Tuning Parameters</span>
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                {/* Stability */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-surface-300 font-medium">
-                    <span>Stability</span>
-                    <span className="font-mono text-brand-400">{(settings.stability * 100).toFixed(0)}%</span>
+            <Card className="animate-in fade-in-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Acoustic & Style Parameters</CardTitle>
+                <CardDescription className="text-xs">
+                  Fine-tune latent diffusion stability, speaker similarity, and style exaggeration.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Speed */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Pacing Speed</span>
+                      <span className="font-mono font-medium">{settings.speed}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.5}
+                      max={2.0}
+                      step={0.05}
+                      value={settings.speed}
+                      onChange={(e) =>
+                        setSettings({ ...settings, speed: parseFloat(e.target.value) })
+                      }
+                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={settings.stability}
-                    onChange={(e) => setSettings({ ...settings, stability: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
-                  />
-                  <p className="text-[10px] text-surface-500">Lower = more expressive and dramatic. Higher = monotone and steady.</p>
-                </div>
 
-                {/* Similarity */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-surface-300 font-medium">
-                    <span>Clarity & Similarity Boost</span>
-                    <span className="font-mono text-brand-400">{(settings.similarity * 100).toFixed(0)}%</span>
+                  {/* Stability */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Vocal Stability</span>
+                      <span className="font-mono font-medium">{settings.stability}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={settings.stability}
+                      onChange={(e) =>
+                        setSettings({ ...settings, stability: parseFloat(e.target.value) })
+                      }
+                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={settings.similarity}
-                    onChange={(e) => setSettings({ ...settings, similarity: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
-                  />
-                  <p className="text-[10px] text-surface-500">Adherence to original voice reference timbre.</p>
-                </div>
 
-                {/* Style Exaggeration */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-surface-300 font-medium">
-                    <span>Style Exaggeration</span>
-                    <span className="font-mono text-brand-400">{(settings.styleExaggeration * 100).toFixed(0)}%</span>
+                  {/* Similarity */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Speaker Similarity</span>
+                      <span className="font-mono font-medium">{settings.similarity}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={settings.similarity}
+                      onChange={(e) =>
+                        setSettings({ ...settings, similarity: parseFloat(e.target.value) })
+                      }
+                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={settings.styleExaggeration}
-                    onChange={(e) => setSettings({ ...settings, styleExaggeration: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
-                  />
-                  <p className="text-[10px] text-surface-500">Amplifies style nuances of the voice speaker.</p>
-                </div>
 
-                {/* Speed */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-surface-300 font-medium">
-                    <span>Speed Factor</span>
-                    <span className="font-mono text-brand-400">{settings.speed.toFixed(2)}x</span>
+                  {/* Style Exaggeration */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Style Exaggeration</span>
+                      <span className="font-mono font-medium">{settings.styleExaggeration}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={settings.styleExaggeration}
+                      onChange={(e) =>
+                        setSettings({ ...settings, styleExaggeration: parseFloat(e.target.value) })
+                      }
+                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="2.0"
-                    step="0.05"
-                    value={settings.speed}
-                    onChange={(e) => setSettings({ ...settings, speed: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-surface-800 rounded-lg appearance-none cursor-pointer accent-brand-500"
-                  />
-                  <p className="text-[10px] text-surface-500">Pacing of spoken delivery.</p>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Active Audio Waveform Player */}
+          {/* Active Player Card */}
           {currentAudioUrl && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-surface-400">Latest Rendered Audio</h3>
-              <AudioWaveformPlayer
-                audioUrl={currentAudioUrl}
-                voiceName={selectedVoice.name}
-                durationSeconds={currentDuration}
-              />
-            </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold">Active Audio Waveform</CardTitle>
+                    <CardDescription className="text-xs">
+                      {selectedVoice.name} · 24kHz Lossless Audio
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="font-mono text-[10px]">
+                    24kHz WAV
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <AudioWaveformPlayer
+                  audioUrl={currentAudioUrl}
+                  title={`${selectedVoice.name} — Generated Speech`}
+                  duration={currentDuration}
+                />
+              </CardContent>
+            </Card>
           )}
         </div>
 
-        {/* Generation History Sidebar (1 col) */}
-        <div className="glass-panel p-4 rounded-2xl border border-surface-700/80 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-surface-800">
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-surface-400" />
-              <h3 className="text-sm font-bold text-white tracking-tight">Recent Generations</h3>
-            </div>
-            <span className="text-[11px] font-mono text-surface-400">{history.length} items</span>
-          </div>
-
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-            {history.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  setCurrentAudioUrl(item.audioUrl);
-                  setCurrentDuration(item.durationSeconds);
-                  setSelectedVoice(item.voice);
-                }}
-                className="p-3 rounded-xl bg-surface-900/60 border border-surface-800/80 hover:border-brand-500/50 hover:bg-surface-800/40 cursor-pointer transition-all space-y-2"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white">{item.voice.name}</span>
-                  <span className="text-[10px] font-mono text-surface-400">{item.createdAt}</span>
+        {/* History Sidebar (4 cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-primary" />
+                  <CardTitle className="text-sm font-semibold">Studio History</CardTitle>
                 </div>
+                <Badge variant="secondary" className="font-mono text-[10px]">
+                  {history.length}
+                </Badge>
+              </div>
+            </CardHeader>
 
-                <p className="text-xs text-surface-300 line-clamp-2 italic">
-                  "{item.text}"
-                </p>
+            <CardContent className="flex-1 overflow-y-auto space-y-2.5 max-h-[600px] p-4 pt-0">
+              {history.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-xs">
+                  <Volume2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p>No speech generated yet.</p>
+                  <p className="text-[11px] text-muted-foreground/80 mt-1">
+                    Your generated takes will appear here.
+                  </p>
+                </div>
+              ) : (
+                history.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentAudioUrl(item.audioUrl);
+                      setCurrentDuration(item.durationSeconds);
+                      setSelectedVoice(item.voice);
+                    }}
+                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
+                      currentAudioUrl === item.audioUrl
+                        ? "bg-muted border-primary/50 shadow-xs"
+                        : "hover:bg-muted/50 border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-semibold">{item.voice.name}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {item.createdAt}
+                      </span>
+                    </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[10px] font-mono text-surface-400">
-                    {item.characterCount} chars · {item.durationSeconds.toFixed(1)}s
-                  </span>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                      {item.text}
+                    </p>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyPrompt(item);
-                      }}
-                      className="p-1 rounded text-surface-400 hover:text-white transition-colors"
-                      title="Copy script"
-                    >
-                      {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setText(item.text);
-                        setSelectedVoice(item.voice);
-                        setCurrentAudioUrl(item.audioUrl);
-                        setCurrentDuration(item.durationSeconds);
-                      }}
-                      className="p-1 rounded text-surface-400 hover:text-brand-300 transition-colors"
-                      title="Load into editor"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => deleteHistoryItem(item.id, e)}
-                      className="p-1 rounded text-surface-400 hover:text-rose-400 transition-colors"
-                      title="Delete from history"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px] text-muted-foreground">
+                      <span>{item.durationSeconds}s</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyPrompt(item);
+                          }}
+                          className="hover:text-foreground transition-colors p-1"
+                        >
+                          {copiedId === item.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <a
+                          href={item.audioUrl}
+                          download={`${item.voice.name}-${item.id}.mp3`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-foreground transition-colors p-1"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => deleteHistoryItem(item.id, e)}
+                          className="hover:text-destructive transition-colors p-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-
-            {history.length === 0 && (
-              <div className="py-12 text-center text-surface-400">
-                <Sparkles className="w-8 h-8 text-surface-700 mx-auto mb-2" />
-                <p className="text-xs">No generations yet.</p>
-                <p className="text-[11px] text-surface-500 mt-1">Rendered audio will appear here.</p>
-              </div>
-            )}
-          </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Voice Selector Modal */}
+      {/* Voice Selection Modal */}
       <VoiceSelectorModal
         isOpen={isVoiceModalOpen}
         onClose={() => setIsVoiceModalOpen(false)}
         selectedVoice={selectedVoice}
-        onSelectVoice={(v) => setSelectedVoice(v)}
+        onSelectVoice={(voice) => {
+          setSelectedVoice(voice);
+          setIsVoiceModalOpen(false);
+        }}
       />
-    </div>
+    </PageContainer>
   );
 }

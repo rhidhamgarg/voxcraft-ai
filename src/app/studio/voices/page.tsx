@@ -7,6 +7,10 @@ import VoiceCard from "@/components/VoiceCard";
 import { Search, Library, Sparkles, Filter, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PageContainer from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function VoiceLibraryPage() {
   const router = useRouter();
@@ -46,102 +50,93 @@ export default function VoiceLibraryPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-400 text-xs font-mono mb-1">
-            <Library className="w-4 h-4" />
-            <span>GLOBAL VOICE REPOSITORY</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Voice Library & Marketplace</h1>
-          <p className="text-sm text-surface-400 mt-1">
-            Discover thousands of community and studio voices for your next project.
+          <h1 className="text-2xl font-bold tracking-tight">Voice Library & Marketplace</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Discover community and curated neural voices for conversational agents, audiobooks, and videos.
           </p>
         </div>
 
-        <Link
-          href="/studio/cloning"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white gradient-brand hover:brightness-110 shadow-md shadow-brand-500/25 transition-all self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Clone New Voice</span>
-        </Link>
+        <Button asChild size="sm" className="gap-2 self-start sm:self-auto">
+          <Link href="/studio/cloning">
+            <Plus className="w-4 h-4" />
+            <span>Clone New Voice</span>
+          </Link>
+        </Button>
       </div>
 
-      {/* Filter & Search Toolbar */}
-      <div className="glass-panel p-4 rounded-2xl border border-surface-700/80 space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-surface-400" />
-            <input
-              type="text"
-              placeholder="Search by speaker name, accent, tone, or style tags..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-surface-900 border border-surface-700 rounded-xl text-xs sm:text-sm text-white placeholder-surface-500 focus:outline-none focus:border-brand-500"
-            />
-          </div>
+      {/* Filter & Search Card */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by speaker name, accent, tone, or style tags..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
 
-          <div className="flex items-center gap-2">
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="px-3 py-2 bg-surface-900 border border-surface-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-brand-500"
-            >
-              <option value="all">All Genders</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="non-binary">Non-binary</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Categories Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-1">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                category === cat.id
-                  ? "bg-brand-500 text-white shadow-sm"
-                  : "bg-surface-900 text-surface-400 hover:text-white hover:bg-surface-800 border border-surface-800"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Voice Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredVoices.map((voice) => (
-          <div key={voice.id} className="relative group">
-            <VoiceCard voice={voice} />
-            <div className="mt-2 flex justify-end">
-              <button
-                onClick={() => {
-                  router.push(`/studio?voice=${voice.id}`);
-                }}
-                className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1 px-2 py-1"
+            <div className="flex items-center gap-2">
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="h-9 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                <span>Use in Studio</span>
-                <span>→</span>
-              </button>
+                <option value="all">All Genders</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="non-binary">Non-binary</option>
+              </select>
             </div>
           </div>
-        ))}
 
-        {filteredVoices.length === 0 && (
-          <div className="col-span-full py-16 text-center text-surface-400">
-            <Library className="w-10 h-10 text-surface-700 mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-white">No voices found</h3>
-            <p className="text-xs text-surface-500 mt-1">Try relaxing your search terms or category filters.</p>
+          {/* Categories Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pt-1">
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c.id)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                  category === c.id
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
-        )}
+        </CardContent>
+      </Card>
+
+      {/* Voice Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredVoices.map((voice) => (
+          <VoiceCard
+            key={voice.id}
+            voice={voice}
+            onSelect={() => router.push(`/studio`)}
+          />
+        ))}
       </div>
-    </div>
+
+      {filteredVoices.length === 0 && (
+        <Card className="p-12 text-center">
+          <Library className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-30" />
+          <h3 className="text-base font-semibold">No matching voices found</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Try adjusting your search criteria or filter categories.
+          </p>
+        </Card>
+      )}
+    </PageContainer>
   );
 }
