@@ -18,8 +18,8 @@ export function useGsapContext(
   useEffect(() => {
     if (prefersReducedMotion()) return;
 
-    const ctx = gsap.context(() => {
-      callback(ctx);
+    const ctx = gsap.context((self) => {
+      callback(self);
     }, scope?.current || undefined);
 
     return () => {
