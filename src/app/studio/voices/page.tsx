@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Voice } from "@/types";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import VoiceCard from "@/components/VoiceCard";
-import { Search, Library, Sparkles, Filter, Plus } from "lucide-react";
+import { Search, Library, Sparkles, Filter, Plus, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/page-container";
@@ -26,13 +26,20 @@ export default function VoiceLibraryPage() {
     fetch("/api/voices")
       .then((res) => res.json())
       .then((data) => {
-        if (data.voices) setVoices(data.voices);
+        if (data.voices && Array.isArray(data.voices) && data.voices.length > 0) {
+          setVoices(data.voices);
+        }
       })
       .catch(() => {});
   }, []);
 
   const filteredVoices = voices.filter((voice) => {
-    const matchesCategory = category === "all" || voice.category === category;
+    const matchesCategory =
+      category === "all"
+        ? true
+        : category === "cloned"
+        ? voice.isCloned
+        : voice.category === category;
     const matchesGender = gender === "all" || voice.gender === gender;
     const matchesSearch =
       voice.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -61,7 +68,7 @@ export default function VoiceLibraryPage() {
         .fromTo(
           ".gsap-voice-card",
           { opacity: 0, y: 14 },
-          { opacity: 1, y: 0, duration: 0.35, stagger: 0.04 },
+          { opacity: 1, y: 0, duration: 0.35, stagger: 0.03 },
           "-=0.2"
         );
     },
@@ -70,7 +77,7 @@ export default function VoiceLibraryPage() {
   );
 
   const categories = [
-    { id: "all", label: "All Use Cases" },
+    { id: "all", label: "All Voices (23)" },
     { id: "conversational", label: "Conversational" },
     { id: "narration", label: "Narration" },
     { id: "characters", label: "Characters" },
@@ -84,11 +91,16 @@ export default function VoiceLibraryPage() {
         {/* Header Banner */}
         <div className="gsap-voices-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
-              Voice Library & Marketplace
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
-              Discover community and curated neural voices for conversational agents, audiobooks, and videos.
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
+                Voice Library & Roster
+              </h1>
+              <Badge variant="steel" className="text-[10px]">
+                23 Neural Voices · 100% Free
+              </Badge>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Explore 23 high-fidelity Kokoro-82M neural voices with zero subscription requirements or tier limits.
             </p>
           </div>
 
@@ -108,10 +120,10 @@ export default function VoiceLibraryPage() {
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search by speaker name, accent, tone, or style tags..."
+                  placeholder="Search by voice name, accent, tone, or style tags..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -122,9 +134,8 @@ export default function VoiceLibraryPage() {
                   className="h-9 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Genders</option>
-                  <option value="female">Female</option>
-                  <option value="male">Male</option>
-                  <option value="non-binary">Non-binary</option>
+                  <option value="female">Female (11)</option>
+                  <option value="male">Male (12)</option>
                 </select>
               </div>
             </div>
@@ -155,7 +166,7 @@ export default function VoiceLibraryPage() {
             <div key={voice.id} className="gsap-voice-card">
               <VoiceCard
                 voice={voice}
-                onSelect={() => router.push(`/studio`)}
+                onSelect={() => router.push(`/studio?voice=${encodeURIComponent(voice.id)}`)}
               />
             </div>
           ))}

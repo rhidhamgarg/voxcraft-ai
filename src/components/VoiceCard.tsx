@@ -1,8 +1,8 @@
 "use client";
 
 import { Voice } from "@/types";
-import { Play, Pause, Sparkles, Check, Mic2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { Play, Pause, Check, Mic2, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
 interface VoiceCardProps {
@@ -13,23 +13,59 @@ interface VoiceCardProps {
 
 export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const toggleSample = (e: React.MouseEvent) => {
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleSample = async (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+
     if (!audioRef.current) {
+      setIsLoadingAudio(true);
       const audio = new Audio();
-      audio.src = `/api/tts/stream`;
-      audio.onended = () => setIsPlaying(false);
+      audio.src = `/api/tts/preview?voice=${encodeURIComponent(voice.id)}`;
+      
+      audio.oncanplaythrough = () => {
+        setIsLoadingAudio(false);
+      };
+      
+      audio.onplay = () => {
+        setIsLoadingAudio(false);
+        setIsPlaying(true);
+      };
+
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+
+      audio.onerror = () => {
+        setIsLoadingAudio(false);
+        setIsPlaying(false);
+      };
+
       audioRef.current = audio;
     }
 
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
+    try {
+      await audioRef.current.play();
       setIsPlaying(true);
-      setTimeout(() => setIsPlaying(false), 2500);
+    } catch {
+      setIsLoadingAudio(false);
+      setIsPlaying(false);
     }
   };
 
@@ -60,11 +96,9 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-heading font-semibold text-sm tracking-tight">{voice.name}</h3>
-              {voice.isPremium && (
-                <Badge variant="ivory" className="text-[10px] px-1.5 py-0 font-mono">
-                  <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Pro
-                </Badge>
-              )}
+              <Badge variant="subtle" className="text-[10px] px-1.5 py-0 font-mono">
+                Free
+              </Badge>
             </div>
             <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5">
               {voice.accent} · {voice.gender}
@@ -75,14 +109,17 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
         <button
           type="button"
           onClick={toggleSample}
+          disabled={isLoadingAudio}
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
             isPlaying
               ? "bg-primary text-primary-foreground shadow-xs"
               : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
           }`}
-          title="Listen to Voice Preview"
+          title={`Listen to ${voice.name} voice preview`}
         >
-          {isPlaying ? (
+          {isLoadingAudio ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : isPlaying ? (
             <Pause className="w-3.5 h-3.5 fill-current" />
           ) : (
             <Play className="w-3.5 h-3.5 fill-current ml-0.5" />

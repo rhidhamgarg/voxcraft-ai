@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -14,8 +14,6 @@ import {
   Check,
   ChevronDown,
   Download,
-  AlertTriangle,
-  Coins,
   Trash2,
   Volume2,
   Radio,
@@ -35,7 +33,6 @@ import { DEFAULT_VOICES } from "@/lib/voice-catalog";
 import { Voice, GenerationSettings, GenerationHistoryItem } from "@/types";
 import VoiceSelectorModal from "@/components/VoiceSelectorModal";
 import AudioWaveformPlayer from "@/components/AudioWaveformPlayer";
-import { useRef } from "react";
 import { useGsapContext } from "@/hooks/use-gsap";
 import { gsap, MOTION } from "@/lib/gsap";
 
@@ -59,10 +56,21 @@ export default function StudioPage() {
   const [currentDuration, setCurrentDuration] = useState<number>(0);
   const [history, setHistory] = useState<GenerationHistoryItem[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [quotaError, setQuotaError] = useState<{ available: number; required: number } | null>(null);
 
   const characterCount = text.length;
   const maxCharacters = 5000;
+
+  // Read URL search param for voice selection
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const voiceParam = params.get("voice");
+      if (voiceParam) {
+        const found = DEFAULT_VOICES.find((v) => v.id === voiceParam);
+        if (found) setSelectedVoice(found);
+      }
+    }
+  }, []);
 
   // Hydrate generation history from API on mount
   useEffect(() => {
@@ -79,25 +87,36 @@ export default function StudioPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [currentAudioUrl]);
 
   const emotionTags = [
     { label: "Softly", tag: "[softly] " },
     { label: "Whispers", tag: "[whispers] " },
     { label: "Laughs", tag: "[laughs] " },
-    { label: "Sarcastically", tag: "[sarcastically] " },
-    { label: "Excitedly", tag: "[excitedly] " },
-    { label: "Dramatically", tag: "[dramatically] " },
+    { label: "Excited", tag: "[excited] " },
+    { label: "Pensive", tag: "[pensive] " },
+    { label: "Dramatic Pause", tag: " ... " },
+  ];
+
+  const quickVoices = [
+    DEFAULT_VOICES.find((v) => v.id === "af_heart") || DEFAULT_VOICES[0],
+    DEFAULT_VOICES.find((v) => v.id === "af_bella") || DEFAULT_VOICES[1],
+    DEFAULT_VOICES.find((v) => v.id === "af_nicole") || DEFAULT_VOICES[2],
+    DEFAULT_VOICES.find((v) => v.id === "am_adam") || DEFAULT_VOICES[7],
+    DEFAULT_VOICES.find((v) => v.id === "am_echo") || DEFAULT_VOICES[9],
+    DEFAULT_VOICES.find((v) => v.id === "bf_emma") || DEFAULT_VOICES[15],
+    DEFAULT_VOICES.find((v) => v.id === "bm_george") || DEFAULT_VOICES[19],
+    DEFAULT_VOICES.find((v) => v.id === "bm_daniel") || DEFAULT_VOICES[22],
   ];
 
   const insertTag = (tag: string) => {
-    setText((prev) => prev + " " + tag);
+    setText((prev) => prev + tag);
   };
 
   const handleGenerate = async () => {
     if (!text.trim() || isGenerating) return;
+
     setIsGenerating(true);
-    setQuotaError(null);
 
     try {
       const response = await fetch("/api/tts/generate", {
@@ -112,14 +131,6 @@ export default function StudioPage() {
       });
 
       const res = await response.json();
-
-      if (response.status === 402) {
-        setQuotaError({
-          available: res.error?.details?.available || 0,
-          required: res.error?.details?.required || text.length,
-        });
-        return;
-      }
 
       if (res.success && res.data?.audioUrl) {
         const item: GenerationHistoryItem = {
@@ -136,13 +147,6 @@ export default function StudioPage() {
         setCurrentAudioUrl(res.data.audioUrl);
         setCurrentDuration(res.data.durationSeconds || 3.5);
         setHistory((prev) => [item, ...prev]);
-
-        // Deduct credits via API
-        fetch("/api/user/credits", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "deduct", amount: text.length }),
-        }).catch(() => {});
       }
     } catch (err) {
       console.error("Speech synthesis failed:", err);
@@ -183,14 +187,14 @@ export default function StudioPage() {
         .fromTo(
           ".gsap-studio-editor",
           { opacity: 0, y: 14 },
-          { opacity: 1, y: 0, duration: 0.45 },
+          { opacity: 1, y: 0, duration: 0.4 },
           "-=0.2"
         )
         .fromTo(
           ".gsap-studio-history",
-          { opacity: 0, x: 12 },
-          { opacity: 1, x: 0, duration: 0.45 },
-          "-=0.25"
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.4 },
+          "-=0.2"
         );
     },
     studioRef,
@@ -202,377 +206,459 @@ export default function StudioPage() {
       <PageContainer>
         {/* Header bar */}
         <div className="gsap-studio-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span>Text to Speech Studio</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
-            Convert natural language into human-grade spoken audio with contextual emotion control.
-          </p>
-        </div>
-
-        {/* Model Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-muted-foreground">Engine:</span>
-          <select
-            value={modelId}
-            onChange={(e) => setModelId(e.target.value)}
-            className="h-8 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="vox_v4_ultra">Kokoro-82M (Local Vocoder 24kHz)</option>
-            <option value="vox_v3_multilingual">Vox-3 Multilingual (32+ Languages)</option>
-            <option value="vox_turbo_v2">Turbo Realtime (Sub-250ms Latency)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Quota Depletion Alert */}
-      {quotaError && (
-        <Card className="border-destructive/40 bg-destructive/10">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-destructive">
-                  Insufficient generation credits (Need: {quotaError.required}, Available: {quotaError.available})
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  Upgrade your subscription to keep synthesizing speech without interruption.
-                </p>
-              </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span>Text to Speech Studio</span>
+              </h1>
+              <Badge variant="steel" className="text-[10px]">
+                Free & Unlimited
+              </Badge>
             </div>
-            <Button asChild size="sm" variant="destructive">
-              <Link href="/pricing">Upgrade Plan</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
+              Select from 23 official Kokoro-82M neural voices or custom clones with sub-second local synthesis.
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Main Editor Section (8 cols) */}
-        <div className="gsap-studio-editor lg:col-span-8 space-y-6">
-          {/* Active Voice Card */}
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs">
-                  {selectedVoice.name.charAt(0)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-heading font-semibold tracking-tight">{selectedVoice.name}</h3>
-                    <Badge variant="outline" className="text-[10px] font-mono">
-                      {selectedVoice.category}
-                    </Badge>
+          {/* Model Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-muted-foreground">Engine:</span>
+            <select
+              value={modelId}
+              onChange={(e) => setModelId(e.target.value)}
+              className="h-8 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="vox_v4_ultra">Kokoro-82M (Local Vocoder 24kHz)</option>
+              <option value="vox_v3_multilingual">Vox-3 Multilingual (32+ Languages)</option>
+              <option value="vox_turbo_v2">Turbo Realtime (Sub-250ms Latency)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Editor Section (8 cols) */}
+          <div className="gsap-studio-editor lg:col-span-8 space-y-6">
+            {/* Active Voice Selector Card */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                      {selectedVoice.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-heading font-semibold tracking-tight">{selectedVoice.name}</h3>
+                        <Badge variant="outline" className="text-[10px] font-mono capitalize">
+                          {selectedVoice.category}
+                        </Badge>
+                        <Badge variant="steel" className="text-[10px]">
+                          Free
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground tracking-snug mt-0.5">
+                        {selectedVoice.accent} · {selectedVoice.gender} · 24kHz Lossless
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground tracking-snug mt-0.5">
-                    {selectedVoice.accent} · {selectedVoice.gender}
-                  </p>
+
+                  <div className="flex items-center gap-2">
+                    {/* Direct Voice Dropdown */}
+                    <select
+                      value={selectedVoice.id}
+                      onChange={(e) => {
+                        const voice = DEFAULT_VOICES.find((v) => v.id === e.target.value);
+                        if (voice) setSelectedVoice(voice);
+                      }}
+                      className="h-8 px-2.5 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <optgroup label="American Female">
+                        {DEFAULT_VOICES.filter((v) => v.accent === "American" && v.gender === "female").map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="American Male">
+                        {DEFAULT_VOICES.filter((v) => v.accent === "American" && v.gender === "male").map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="British Female">
+                        {DEFAULT_VOICES.filter((v) => v.accent === "British" && v.gender === "female").map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="British Male">
+                        {DEFAULT_VOICES.filter((v) => v.accent === "British" && v.gender === "male").map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsVoiceModalOpen(true)}
+                      className="gap-1.5 text-xs h-8 shrink-0"
+                    >
+                      <span>All 23 Voices</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsVoiceModalOpen(true)}
-                className="gap-1.5 text-xs"
-              >
-                <span>Change Voice</span>
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-            </CardContent>
-          </Card>
+                {/* Quick Switch Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-border/60">
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap font-medium mr-1">
+                    Quick Pick:
+                  </span>
+                  {quickVoices.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVoice(v)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                        selectedVoice.id === v.id
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                          : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border/60"
+                      }`}
+                    >
+                      {v.name.split(" ")[0]} ({v.gender.charAt(0).toUpperCase()})
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Script Textarea Card */}
-          <Card className="overflow-hidden">
-            {/* Emotion Chips Bar */}
-            <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-1.5 overflow-x-auto text-xs">
-              <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap mr-1 flex items-center gap-1">
-                <Wand2 className="w-3 h-3 text-primary" /> Emotion Tags:
-              </span>
-              {emotionTags.map((et) => (
-                <button
-                  key={et.label}
-                  type="button"
-                  onClick={() => insertTag(et.tag)}
-                  className="px-2 py-0.5 rounded border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50 text-[11px] font-mono whitespace-nowrap transition-colors cursor-pointer"
-                >
-                  {et.tag.trim()}
-                </button>
-              ))}
-            </div>
-
-            {/* Input area */}
-            <CardContent className="p-4">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Type or paste your script here. Use inline markup like [whispers] or [laughs] to guide vocal emotion..."
-                rows={8}
-                className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground focus:outline-none resize-none"
-              />
-            </CardContent>
-
-            {/* Bottom Bar inside Card */}
-            <CardFooter className="flex items-center justify-between border-t border-border px-4 py-3 bg-muted/10">
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="font-mono">
-                  {characterCount} / {maxCharacters} chars
+            {/* Script Textarea Card */}
+            <Card className="overflow-hidden">
+              {/* Emotion Chips Bar */}
+              <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-1.5 overflow-x-auto text-xs">
+                <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap mr-1 flex items-center gap-1">
+                  <Wand2 className="w-3 h-3 text-primary" /> Emotion Tags:
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="hover:text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>{showAdvanced ? "Hide Advanced" : "Voice Settings"}</span>
-                </button>
+                {emotionTags.map((et) => (
+                  <button
+                    key={et.label}
+                    type="button"
+                    onClick={() => insertTag(et.tag)}
+                    className="px-2 py-0.5 rounded border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50 text-[11px] font-mono whitespace-nowrap transition-colors cursor-pointer"
+                  >
+                    {et.tag.trim()}
+                  </button>
+                ))}
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !text.trim()}
-                  className="gap-2"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Synthesising...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      <span>Generate Speech</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
+              {/* Input area */}
+              <CardContent className="p-4">
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Type or paste your script here. Use inline markup like [whispers] or [laughs] to guide vocal emotion..."
+                  rows={8}
+                  className="w-full bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground focus:outline-none resize-none"
+                />
+              </CardContent>
 
-          {/* Advanced Sliders Drawer */}
-          {showAdvanced && (
-            <Card className="animate-in fade-in-50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">Acoustic & Style Parameters</CardTitle>
-                <CardDescription className="text-xs">
-                  Fine-tune latent diffusion stability, speaker similarity, and style exaggeration.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Bottom Bar inside Card */}
+              <CardFooter className="flex items-center justify-between border-t border-border px-4 py-3 bg-muted/10">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="font-mono">
+                    {characterCount} / {maxCharacters} chars
+                  </span>
+                  <span className="flex items-center gap-1 text-steelblue font-mono">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Free Local Generation</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-border transition-colors cursor-pointer ${
+                      showAdvanced ? "bg-muted text-foreground" : "bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>{showAdvanced ? "Hide Controls" : "Voice Controls"}</span>
+                  </button>
+
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || characterCount === 0}
+                    className="gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Synthesizing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 fill-current" />
+                        <span>Generate Speech</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+
+            {/* Advanced Voice Controls Drawer */}
+            {showAdvanced && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-heading font-semibold text-sm tracking-tight">Voice Prosody & Synthesis Settings</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSettings({
+                        stability: 0.5,
+                        similarity: 0.75,
+                        styleExaggeration: 0.15,
+                        speed: 1.0,
+                      })
+                    }
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset defaults</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Speed */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Pacing Speed</span>
-                      <span className="font-mono font-medium">{settings.speed}x</span>
+                      <span className="font-medium">Pacing & Speed</span>
+                      <span className="font-mono text-muted-foreground">{settings.speed}x</span>
                     </div>
                     <input
                       type="range"
-                      min={0.5}
-                      max={2.0}
-                      step={0.05}
+                      min="0.5"
+                      max="2.0"
+                      step="0.05"
                       value={settings.speed}
                       onChange={(e) =>
                         setSettings({ ...settings, speed: parseFloat(e.target.value) })
                       }
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full accent-primary"
                     />
+                    <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>0.5x Slow</span>
+                      <span>1.0x Normal</span>
+                      <span>2.0x Fast</span>
+                    </div>
                   </div>
 
-                  {/* Stability */}
+                  {/* Vocal Stability */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Vocal Stability</span>
-                      <span className="font-mono font-medium">{settings.stability}</span>
+                      <span className="font-medium">Stability (Consistency)</span>
+                      <span className="font-mono text-muted-foreground">{Math.round(settings.stability * 100)}%</span>
                     </div>
                     <input
                       type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
+                      min="0.0"
+                      max="1.0"
+                      step="0.05"
                       value={settings.stability}
                       onChange={(e) =>
                         setSettings({ ...settings, stability: parseFloat(e.target.value) })
                       }
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full accent-primary"
                     />
+                    <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>Expressive & Dynamic</span>
+                      <span>Even & Steady</span>
+                    </div>
                   </div>
 
-                  {/* Similarity */}
+                  {/* Clarity / Similarity */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Speaker Similarity</span>
-                      <span className="font-mono font-medium">{settings.similarity}</span>
+                      <span className="font-medium">Similarity Boost</span>
+                      <span className="font-mono text-muted-foreground">{Math.round(settings.similarity * 100)}%</span>
                     </div>
                     <input
                       type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
+                      min="0.0"
+                      max="1.0"
+                      step="0.05"
                       value={settings.similarity}
                       onChange={(e) =>
                         setSettings({ ...settings, similarity: parseFloat(e.target.value) })
                       }
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full accent-primary"
                     />
+                    <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>Low (Artifact suppression)</span>
+                      <span>High (Exact Timbre)</span>
+                    </div>
                   </div>
 
                   {/* Style Exaggeration */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Style Exaggeration</span>
-                      <span className="font-mono font-medium">{settings.styleExaggeration}</span>
+                      <span className="font-medium">Style Exaggeration</span>
+                      <span className="font-mono text-muted-foreground">{Math.round(settings.styleExaggeration * 100)}%</span>
                     </div>
                     <input
                       type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
+                      min="0.0"
+                      max="1.0"
+                      step="0.05"
                       value={settings.styleExaggeration}
                       onChange={(e) =>
                         setSettings({ ...settings, styleExaggeration: parseFloat(e.target.value) })
                       }
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full accent-primary"
                     />
+                    <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                      <span>Natural / Flat</span>
+                      <span>Dramatic Emphasis</span>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </Card>
+            )}
 
-          {/* Active Player Card */}
-          {currentAudioUrl && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-semibold">Active Audio Waveform</CardTitle>
-                    <CardDescription className="text-xs">
-                      {selectedVoice.name} · 24kHz Lossless Audio
-                    </CardDescription>
+            {/* Generated Audio Player Waveform Card */}
+            {currentAudioUrl && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">Active Audio Waveform</CardTitle>
+                      <CardDescription className="text-xs">
+                        {selectedVoice.name} · 24kHz Lossless Audio
+                      </CardDescription>
+                    </div>
+                    <a
+                      href={currentAudioUrl}
+                      download={`voxcraft-${selectedVoice.id}-${Date.now()}.wav`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download WAV</span>
+                    </a>
                   </div>
-                  <Badge variant="outline" className="font-mono text-[10px]">
-                    24kHz WAV
-                  </Badge>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <AudioWaveformPlayer
+                    audioUrl={currentAudioUrl}
+                    title={`${selectedVoice.name} — Generated Speech`}
+                    duration={currentDuration}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column: Generation History (4 cols) */}
+          <div className="gsap-studio-history lg:col-span-4 space-y-4">
+            <Card>
+              <CardHeader className="p-4 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <History className="w-4 h-4 text-primary" />
+                    <span>Recent Generations</span>
+                  </CardTitle>
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {history.length} items
+                  </span>
                 </div>
               </CardHeader>
-              <CardContent>
-                <AudioWaveformPlayer
-                  audioUrl={currentAudioUrl}
-                  title={`${selectedVoice.name} — Generated Speech`}
-                  duration={currentDuration}
-                />
-              </CardContent>
-            </Card>
-          )}
-        </div>
 
-        {/* History Sidebar (4 cols) */}
-        <div className="gsap-studio-history lg:col-span-4 space-y-4">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-primary" />
-                  <CardTitle className="text-sm font-semibold">Studio History</CardTitle>
-                </div>
-                <Badge variant="secondary" className="font-mono text-[10px]">
-                  {history.length}
-                </Badge>
-              </div>
-            </CardHeader>
+              <CardContent className="p-3 space-y-2.5 max-h-[620px] overflow-y-auto">
+                {history.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-xs space-y-1">
+                    <p>No generations yet.</p>
+                    <p className="text-[11px]">Synthesize speech above to see history here.</p>
+                  </div>
+                ) : (
+                  history.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setCurrentAudioUrl(item.audioUrl);
+                        setCurrentDuration(item.durationSeconds);
+                        setSelectedVoice(item.voice);
+                      }}
+                      className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
+                        currentAudioUrl === item.audioUrl
+                          ? "border-primary bg-primary/5 shadow-xs"
+                          : "border-border hover:border-foreground/30 hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-heading font-semibold tracking-tight">{item.voice.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {item.createdAt}
+                        </span>
+                      </div>
 
-            <CardContent className="flex-1 overflow-y-auto space-y-2.5 max-h-[600px] p-4 pt-0">
-              {history.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground text-xs">
-                  <Volume2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p>No speech generated yet.</p>
-                  <p className="text-[11px] text-muted-foreground/80 mt-1">
-                    Your generated takes will appear here.
-                  </p>
-                </div>
-              ) : (
-                history.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setCurrentAudioUrl(item.audioUrl);
-                      setCurrentDuration(item.durationSeconds);
-                      setSelectedVoice(item.voice);
-                    }}
-                    className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                      currentAudioUrl === item.audioUrl
-                        ? "bg-muted border-primary/50 shadow-xs"
-                        : "hover:bg-muted/50 border-border"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-heading font-semibold tracking-tight">{item.voice.name}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {item.createdAt}
-                      </span>
-                    </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2 leading-relaxed">
+                        {item.text}
+                      </p>
 
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed tracking-normal mb-2">
-                      {item.text}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px] text-muted-foreground">
-                      <span>{item.durationSeconds}s</span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyPrompt(item);
-                          }}
-                          className="hover:text-foreground transition-colors p-1"
-                        >
-                          {copiedId === item.id ? (
-                            <Check className="w-3.5 h-3.5 text-steelblue" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <a
-                          href={item.audioUrl}
-                          download={`${item.voice.name}-${item.id}.mp3`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="hover:text-foreground transition-colors p-1"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </a>
-                        <button
-                          type="button"
-                          onClick={(e) => deleteHistoryItem(item.id, e)}
-                          className="hover:text-destructive transition-colors p-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono pt-1.5 border-t border-border/40">
+                        <span>{item.durationSeconds}s</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyPrompt(item);
+                            }}
+                            className="hover:text-foreground transition-colors p-1"
+                            title="Copy prompt"
+                          >
+                            {copiedId === item.id ? (
+                              <Check className="w-3.5 h-3.5 text-steelblue" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <a
+                            href={item.audioUrl}
+                            download={`${item.voice.name}-${item.id}.wav`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:text-foreground transition-colors p-1"
+                            title="Download audio"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={(e) => deleteHistoryItem(item.id, e)}
+                            className="hover:text-destructive transition-colors p-1"
+                            title="Delete item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
 
-      {/* Voice Selection Modal */}
-      <VoiceSelectorModal
-        isOpen={isVoiceModalOpen}
-        onClose={() => setIsVoiceModalOpen(false)}
-        selectedVoice={selectedVoice}
-        onSelectVoice={(voice) => {
-          setSelectedVoice(voice);
-          setIsVoiceModalOpen(false);
-        }}
-      />
-    </PageContainer>
+        {/* Voice Selection Modal */}
+        <VoiceSelectorModal
+          isOpen={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          selectedVoice={selectedVoice}
+          onSelectVoice={(voice) => {
+            setSelectedVoice(voice);
+            setIsVoiceModalOpen(false);
+          }}
+        />
+      </PageContainer>
     </div>
   );
 }

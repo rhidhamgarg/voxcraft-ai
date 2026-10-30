@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Voice, VoiceCategory } from "@/types";
+import { Voice } from "@/types";
 import { DEFAULT_VOICES } from "@/lib/voice-catalog";
-import { Search, X } from "lucide-react";
+import { Search, X, Volume2 } from "lucide-react";
 import VoiceCard from "./VoiceCard";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface VoiceSelectorModalProps {
   isOpen: boolean;
@@ -22,20 +23,23 @@ export default function VoiceSelectorModal({
 }: VoiceSelectorModalProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [gender, setGender] = useState<string>("all");
 
   if (!isOpen) return null;
 
   const filteredVoices = DEFAULT_VOICES.filter((voice) => {
     const matchesCategory = category === "all" || voice.category === category;
+    const matchesGender = gender === "all" || voice.gender === gender;
     const matchesSearch =
       voice.name.toLowerCase().includes(search.toLowerCase()) ||
       voice.accent.toLowerCase().includes(search.toLowerCase()) ||
+      voice.description.toLowerCase().includes(search.toLowerCase()) ||
       voice.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesGender && matchesSearch;
   });
 
-  const categories: { id: string; label: string }[] = [
-    { id: "all", label: "All Voices" },
+  const categories = [
+    { id: "all", label: "All Voices (23)" },
     { id: "conversational", label: "Conversational" },
     { id: "narration", label: "Narration" },
     { id: "characters", label: "Characters" },
@@ -47,11 +51,21 @@ export default function VoiceSelectorModal({
       <div className="w-full max-w-4xl max-h-[85vh] rounded-xl border border-border bg-card text-card-foreground shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-heading font-semibold tracking-tight">Select an AI Voice</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-              Choose from curated open-weight voices and custom clones
-            </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <Volume2 className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-heading font-semibold tracking-tight">Select an AI Voice</h2>
+                <Badge variant="steel" className="text-[10px]">
+                  23 Kokoro Voices · 100% Free
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                All voices unlocked and running locally at 24kHz with zero subscription required.
+              </p>
+            </div>
           </div>
           <Button
             size="icon"
@@ -65,15 +79,26 @@ export default function VoiceSelectorModal({
 
         {/* Toolbar */}
         <div className="p-4 border-b border-border bg-muted/20 space-y-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by voice name, accent, or style tags..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by voice name, accent, style (e.g. British, Deep, Warm)..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="all">All Genders</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto">
@@ -107,9 +132,10 @@ export default function VoiceSelectorModal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-border bg-muted/10 flex justify-end">
+        <div className="p-3 border-t border-border bg-muted/10 flex justify-between items-center text-xs text-muted-foreground">
+          <span>Showing {filteredVoices.length} voices</span>
           <Button variant="outline" size="sm" onClick={onClose}>
-            Cancel
+            Close
           </Button>
         </div>
       </div>

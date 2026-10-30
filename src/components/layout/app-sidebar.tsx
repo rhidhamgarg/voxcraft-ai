@@ -50,19 +50,19 @@ const mainNavItems = [
     title: "Voice Library",
     url: "/studio/voices",
     icon: Volume2,
-    badge: "18",
+    badge: "23",
   },
   {
     title: "Voice Cloning",
     url: "/studio/cloning",
     icon: MicVocal,
-    badge: "Neural",
+    badge: "Free",
   },
   {
-    title: "Pricing & Plans",
+    title: "Platform Overview",
     url: "/pricing",
-    icon: CreditCard,
-    badge: null,
+    icon: Sparkles,
+    badge: "100% Free",
   },
 ];
 
@@ -98,8 +98,8 @@ export default function AppSidebar() {
             <div className="flex flex-col overflow-hidden">
               <span className="font-semibold text-sm leading-tight text-sidebar-foreground truncate flex items-center gap-1.5">
                 VoxCraft AI
-                <span className="text-[10px] px-1 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 font-mono">
-                  PRO
+                <span className="text-[10px] px-1 py-0.2 rounded bg-steelblue/15 text-steelblue border border-steelblue/25 font-mono font-medium">
+                  FREE
                 </span>
               </span>
               <span className="text-[11px] text-muted-foreground truncate">
@@ -188,10 +188,10 @@ export default function AppSidebar() {
           {!isCollapsed && (
             <div className="flex flex-col flex-1 overflow-hidden">
               <span className="text-xs font-medium text-sidebar-foreground truncate">
-                Creator Account
+                Community Access
               </span>
-              <span className="text-[10px] text-muted-foreground truncate font-mono">
-                12,500 chars left
+              <span className="text-[10px] text-steelblue truncate font-mono">
+                100% Free · 23 Voices
               </span>
             </div>
           )}

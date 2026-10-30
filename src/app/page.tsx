@@ -283,41 +283,41 @@ export default function DashboardOverviewPage() {
                   <CardAction>
                     <Badge variant="subtle" className="gap-1 font-mono text-[10px]">
                       <Layers className="h-3 w-3 text-slate" />
-                      v0.19
+                      All Unlocked
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardContent>
                   <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                    18 Voices
+                    23 Voices
                   </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Curated neural models</p>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Kokoro-82M neural models</p>
                 </CardContent>
                 <CardFooter className="text-xs text-muted-foreground pt-0">
-                  Zero per-minute cost
+                  Zero subscription cost
                 </CardFooter>
               </Card>
 
               <Card className="gsap-stat-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Remaining Credits
+                    Platform Access
                   </CardDescription>
                   <CardAction>
-                    <Badge variant="ivory" className="gap-1 font-mono text-[10px]">
-                      <Coins className="h-3 w-3 text-silver" />
-                      Active
+                    <Badge variant="steel" className="gap-1 font-mono text-[10px]">
+                      <Sparkles className="h-3 w-3 text-steelblue" />
+                      Unlimited
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardContent>
                   <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
-                    12,500
+                    100% Free
                   </CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters available</p>
+                  <p className="text-xs text-muted-foreground mt-1 tracking-snug">Open access local inference</p>
                 </CardContent>
                 <CardFooter className="text-xs text-muted-foreground pt-0">
-                  Renews automatically in 18d
+                  No credit cards or plans required
                 </CardFooter>
               </Card>
             </div>
@@ -333,7 +333,7 @@ export default function DashboardOverviewPage() {
                       Quick TTS Playground
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                      Test prompts directly with the Kokoro neural vocoder.
+                      Test any of the 23 neural voices with the local Kokoro vocoder.
                     </CardDescription>
                   </div>
                   <Badge variant="secondary" className="font-mono text-xs">
@@ -345,9 +345,14 @@ export default function DashboardOverviewPage() {
               <CardContent className="space-y-4">
                 {/* Voice Selection Chips */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Select Voice</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-muted-foreground">Select Voice (Quick Switch)</label>
+                    <Link href="/studio/voices" className="text-[11px] text-steelblue hover:underline">
+                      All 23 voices →
+                    </Link>
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {DEFAULT_VOICES.slice(0, 5).map((v) => (
+                    {DEFAULT_VOICES.slice(0, 8).map((v) => (
                       <button
                         key={v.id}
                         type="button"
@@ -359,8 +364,8 @@ export default function DashboardOverviewPage() {
                         }`}
                       >
                         <Radio className="h-3 w-3" />
-                        <span>{v.name}</span>
-                        <span className="opacity-70 text-[10px]">({v.accent})</span>
+                        <span>{v.name.split(" ")[0]}</span>
+                        <span className="opacity-70 text-[10px]">({v.accent} · {v.gender.charAt(0).toUpperCase()})</span>
                       </button>
                     ))}
                   </div>

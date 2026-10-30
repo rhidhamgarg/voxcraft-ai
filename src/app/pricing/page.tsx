@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Check, Sparkles, Zap, Shield, HelpCircle, ArrowRight, Coins } from "lucide-react";
+import { useRef } from "react";
+import { Check, Sparkles, Zap, Shield, Heart, ArrowRight, Volume2, MicVocal, Download } from "lucide-react";
 import Link from "next/link";
 import PageContainer from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { useGsapContext } from "@/hooks/use-gsap";
 import { gsap, MOTION } from "@/lib/gsap";
 
-export default function PricingPage() {
+export default function PlatformOverviewPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isAnnual, setIsAnnual] = useState(false);
 
   // GSAP Entrance
   useGsapContext(
@@ -34,78 +33,70 @@ export default function PricingPage() {
     []
   );
 
-  const plans = [
+  const capabilities = [
     {
-      id: "free",
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      description: "Explore generative voice synthesis and build initial prototypes.",
-      credits: "10,000 credits/mo (~10 mins)",
+      id: "voices",
+      icon: Volume2,
+      name: "All 23 Neural Voices",
+      badge: "100% Free",
+      description: "Full access to all 23 official Kokoro-82M voice weights across American and British accents.",
       features: [
-        "Text to Speech & Speech to Text",
-        "Access to standard voice library",
-        "API access with standard rate limits",
-        "3 Projects in Studio",
-        "Non-commercial attribution required",
+        "7 American Female voices (Heart, Bella, Nicole...)",
+        "8 American Male voices (Adam, Echo, Fenrir...)",
+        "4 British Female voices (Emma, Isabella...)",
+        "4 British Male voices (George, Lewis...)",
+        "Zero token limits or voice paywalls",
       ],
-      cta: "Current Plan",
-      isPopular: false,
+      cta: "Explore Voices",
+      href: "/studio/voices",
     },
     {
-      id: "starter",
-      name: "Starter",
-      originalPrice: "$6",
-      price: isAnnual ? "$4" : "$5",
-      period: "/ month",
-      promoText: "First month $1 promo",
-      description: "For creators publishing video content, podcasts, and social clips.",
-      credits: "30,000 credits/mo (~30 mins)",
+      id: "cloning",
+      icon: MicVocal,
+      name: "Voice Cloning (IVC & PVC)",
+      badge: "Fully Unlocked",
+      description: "Extract zero-shot latent acoustic embeddings from your microphone or clean WAV samples.",
       features: [
-        "Everything in Free, plus:",
-        "Commercial License included",
-        "Instant Voice Cloning (IVC)",
-        "20 Projects in Studio",
-        "Standard support",
+        "Instant Voice Cloning (15s sample required)",
+        "Professional Foundation fine-tuning profile",
+        "Lossless latent acoustic extraction",
+        "Private roster saved to your local studio",
+        "No paid tier or upgrade gating",
       ],
-      cta: "Choose Starter",
-      isPopular: false,
+      cta: "Clone a Voice",
+      href: "/studio/cloning",
     },
     {
-      id: "creator",
-      name: "Creator",
-      originalPrice: "$22",
-      price: isAnnual ? "$18" : "$22",
-      period: "/ month",
-      promoText: "First month 50% off",
-      description: "For professional creators, game devs, and growing content channels.",
-      credits: "121,000 credits/mo (~2 hours)",
+      id: "studio",
+      icon: Zap,
+      name: "Local Kokoro Engine",
+      badge: "Sub-Second Latency",
+      description: "Direct FastAPI microservice pipeline running locally on your hardware with 24kHz fidelity.",
       features: [
-        "Everything in Starter, plus:",
-        "Professional Voice Cloning (PVC)",
-        "Additional credit top-ups enabled",
-        "Higher concurrency limits",
-        "Priority generation queue",
+        "Real-time synthesis in ~300ms",
+        "24,000 Hz high-fidelity neural vocoder",
+        "Lossless WAV base64 audio downloads",
+        "Contextual inline emotion tags",
+        "Persistent generation history",
       ],
-      cta: "Choose Creator",
-      isPopular: true,
+      cta: "Launch Studio",
+      href: "/studio",
     },
     {
-      id: "pro",
-      name: "Pro",
-      price: isAnnual ? "$79" : "$99",
-      period: "/ month",
-      description: "For studios, audiobook publishers, and high-volume audio production.",
-      credits: "600,000 credits/mo (~10 hours)",
+      id: "license",
+      icon: Shield,
+      name: "Commercial & Creator Rights",
+      badge: "Attribution Free",
+      description: "Generate speech for commercial products, podcasts, games, and YouTube without license fees.",
       features: [
-        "Everything in Creator, plus:",
-        "24kHz / 44.1kHz lossless WAV output",
-        "Elevated API concurrency",
-        "Unlimited Studio projects",
-        "Dedicated account manager",
+        "Permissive Apache 2.0 open-weights foundation",
+        "Unlimited generation for personal and commercial use",
+        "No subscription fees or recurring costs",
+        "No credit card or billing details required",
+        "Complete freedom and data privacy",
       ],
-      cta: "Choose Pro",
-      isPopular: false,
+      cta: "Start Synthesizing",
+      href: "/studio",
     },
   ];
 
@@ -113,105 +104,87 @@ export default function PricingPage() {
     <div ref={containerRef}>
       <PageContainer>
         {/* Header */}
-        <div className="gsap-pricing-header text-center max-w-2xl mx-auto space-y-3">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-semibold tracking-tighter text-foreground">
-            Predictable Pricing for Neural Voice Generation
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-2">
-            Start for free, test locally with Kokoro-82M, and scale seamlessly with dedicated GPU inference clusters.
-          </p>
-
-          {/* Billing Switcher */}
-          <div className="flex items-center justify-center gap-3 pt-3">
-            <span
-              className={`text-xs font-medium tracking-snug cursor-pointer ${
-                !isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
-              }`}
-              onClick={() => setIsAnnual(false)}
-            >
-              Monthly Billing
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsAnnual(!isAnnual)}
-              className="w-11 h-6 rounded-full bg-muted border border-border p-0.5 transition-colors relative cursor-pointer"
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-primary transition-transform ${
-                  isAnnual ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-            <span
-              className={`text-xs font-medium tracking-snug cursor-pointer flex items-center gap-1.5 ${
-                isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
-              }`}
-              onClick={() => setIsAnnual(true)}
-            >
-              Annual Billing
-              <Badge variant="steel" className="text-[10px]">
-                Save 20%
-              </Badge>
-            </span>
+        <div className="gsap-pricing-header text-center max-w-3xl mx-auto space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <Badge variant="steel" className="text-xs px-2.5 py-0.5">
+              <Sparkles className="w-3.5 h-3.5 mr-1 text-steelblue" />
+              100% Free & Open Access
+            </Badge>
           </div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-semibold tracking-tighter text-foreground">
+            Neural Voice Generation for Everyone
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            VoxCraft AI is completely free to use. All 23 neural voices, speech synthesis, and cloning tools are available out-of-the-box with zero subscriptions, credit limits, or paid plan restrictions.
+          </p>
         </div>
 
-        {/* Pricing Cards Grid */}
+        {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
-          {plans.map((plan) => (
-            <Card
-              key={plan.id}
-              className={`gsap-pricing-card flex flex-col justify-between relative ${
-                plan.isPopular ? "border-primary shadow-md" : ""
-              }`}
-            >
-              {plan.isPopular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge variant="default" className="text-[10px] px-2.5 py-0.5">
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base font-heading font-semibold tracking-tight">{plan.name}</CardTitle>
-                <CardDescription className="text-xs text-muted-foreground leading-relaxed">{plan.description}</CardDescription>
-                <div className="pt-3 pb-1">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-heading font-semibold tabular-nums tracking-tighter">{plan.price}</span>
-                    <span className="text-xs text-muted-foreground font-mono">{plan.period}</span>
+          {capabilities.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Card
+                key={item.id}
+                className="gsap-pricing-card flex flex-col justify-between border-border hover:border-foreground/30 transition-all shadow-xs"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <Badge variant="steel" className="text-[10px]">
+                      {item.badge}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-mono">
-                    <Coins className="w-3.5 h-3.5 text-steelblue" />
-                    <span>{plan.credits}</span>
-                  </div>
-                </div>
-              </CardHeader>
+                  <CardTitle className="text-base font-heading font-semibold tracking-tight">{item.name}</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
+                    {item.description}
+                  </CardDescription>
+                </CardHeader>
 
-              <CardContent className="space-y-2.5 flex-1 border-t border-border/40 pt-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Features included:
-                </p>
-                {plan.features.map((feature, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </div>
-                ))}
-              </CardContent>
+                <CardContent className="space-y-2 flex-1 border-t border-border/40 pt-3">
+                  {item.features.map((feat, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs">
+                      <Check className="w-3.5 h-3.5 text-steelblue shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{feat}</span>
+                    </div>
+                  ))}
+                </CardContent>
 
-              <CardFooter className="pt-4 border-t border-border/40">
-                <Button
-                  asChild
-                  variant={plan.isPopular ? "default" : "outline"}
-                  className="w-full text-xs font-medium"
-                >
-                  <Link href="/studio">{plan.cta}</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                <CardFooter className="pt-3 border-t border-border/40">
+                  <Button asChild variant="outline" className="w-full text-xs font-medium">
+                    <Link href={item.href} className="flex items-center justify-center gap-1.5">
+                      <span>{item.cta}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
+
+        {/* Community Banner */}
+        <Card className="mt-8 p-6 bg-muted/20 border-border/60">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <h3 className="font-heading font-semibold text-base tracking-tight flex items-center justify-center sm:justify-start gap-2">
+                <Heart className="w-4 h-4 text-destructive fill-destructive" />
+                <span>Powered by Open-Weights Kokoro-82M</span>
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                Enjoy unconstrained generative audio synthesis running directly on your machine without external cloud dependencies.
+              </p>
+            </div>
+            <Button asChild size="sm" className="shrink-0 gap-1.5">
+              <Link href="/studio">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Launch Speech Studio</span>
+              </Link>
+            </Button>
+          </div>
+        </Card>
       </PageContainer>
     </div>
   );

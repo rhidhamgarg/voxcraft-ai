@@ -173,7 +173,7 @@ export default function VoiceCloningPage() {
             className={`cursor-pointer transition-all ${
               cloneType === "pvc"
                 ? "border-primary bg-primary/5 shadow-xs"
-                : "hover:border-foreground/30 opacity-75"
+                : "hover:border-foreground/30"
             }`}
           >
             <CardHeader className="pb-2">
@@ -181,8 +181,8 @@ export default function VoiceCloningPage() {
                 <Badge variant="outline" className="font-mono text-xs text-warmgrey border-warmgrey/30">
                   Professional (PVC)
                 </Badge>
-                <Badge variant="secondary" className="text-[10px]">
-                  Creator+
+                <Badge variant="steel" className="text-[10px]">
+                  Free
                 </Badge>
               </div>
               <CardTitle className="text-base font-heading font-semibold tracking-tight">Fine-Tuned Foundation Model</CardTitle>
