@@ -54,13 +54,15 @@ export default function VoiceLibraryPage() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Voice Library & Marketplace</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
+            Voice Library & Marketplace
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
             Discover community and curated neural voices for conversational agents, audiobooks, and videos.
           </p>
         </div>
 
-        <Button asChild size="sm" className="gap-2 self-start sm:self-auto">
+        <Button asChild size="sm" className="gap-2 self-start sm:self-auto font-medium tracking-snug">
           <Link href="/studio/cloning">
             <Plus className="w-4 h-4" />
             <span>Clone New Voice</span>
@@ -131,8 +133,8 @@ export default function VoiceLibraryPage() {
       {filteredVoices.length === 0 && (
         <Card className="p-12 text-center">
           <Library className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-30" />
-          <h3 className="text-base font-semibold">No matching voices found</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-base font-heading font-semibold tracking-tight">No matching voices found</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed mt-1">
             Try adjusting your search criteria or filter categories.
           </p>
         </Card>

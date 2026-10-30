@@ -172,11 +172,11 @@ export default function StudioPage() {
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <span>Text to Speech Studio</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
             Convert natural language into human-grade spoken audio with contextual emotion control.
           </p>
         </div>
@@ -230,12 +230,12 @@ export default function StudioPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">{selectedVoice.name}</h3>
+                    <h3 className="text-sm font-heading font-semibold tracking-tight">{selectedVoice.name}</h3>
                     <Badge variant="outline" className="text-[10px] font-mono">
                       {selectedVoice.category}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground tracking-snug mt-0.5">
                     {selectedVoice.accent} · {selectedVoice.gender}
                   </p>
                 </div>
@@ -479,13 +479,13 @@ export default function StudioPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-semibold">{item.voice.name}</span>
+                      <span className="text-xs font-heading font-semibold tracking-tight">{item.voice.name}</span>
                       <span className="text-[10px] text-muted-foreground font-mono">
                         {item.createdAt}
                       </span>
                     </div>
 
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed tracking-normal mb-2">
                       {item.text}
                     </p>
 

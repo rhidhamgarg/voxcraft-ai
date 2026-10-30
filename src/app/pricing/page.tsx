@@ -90,17 +90,17 @@ export default function PricingPage() {
     <PageContainer>
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-semibold tracking-tighter text-foreground">
           Predictable Pricing for Neural Voice Generation
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-2">
           Start for free, test locally with Kokoro-82M, and scale seamlessly with dedicated GPU inference clusters.
         </p>
 
         {/* Billing Switcher */}
         <div className="flex items-center justify-center gap-3 pt-3">
           <span
-            className={`text-xs font-medium cursor-pointer ${
+            className={`text-xs font-medium tracking-snug cursor-pointer ${
               !isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
             }`}
             onClick={() => setIsAnnual(false)}
@@ -119,7 +119,7 @@ export default function PricingPage() {
             />
           </button>
           <span
-            className={`text-xs font-medium cursor-pointer flex items-center gap-1.5 ${
+            className={`text-xs font-medium tracking-snug cursor-pointer flex items-center gap-1.5 ${
               isAnnual ? "text-foreground font-semibold" : "text-muted-foreground"
             }`}
             onClick={() => setIsAnnual(true)}
@@ -150,12 +150,12 @@ export default function PricingPage() {
             )}
 
             <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">{plan.name}</CardTitle>
-              <CardDescription className="text-xs">{plan.description}</CardDescription>
+              <CardTitle className="text-base font-heading font-semibold tracking-tight">{plan.name}</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground leading-relaxed">{plan.description}</CardDescription>
               <div className="pt-3 pb-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">{plan.period}</span>
+                  <span className="text-3xl sm:text-4xl font-heading font-semibold tabular-nums tracking-tighter">{plan.price}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{plan.period}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-mono">
                   <Coins className="w-3.5 h-3.5 text-amber-500" />

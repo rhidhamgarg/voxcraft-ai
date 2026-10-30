@@ -109,11 +109,11 @@ export default function VoiceCloningPage() {
   return (
     <PageContainer className="max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter flex items-center gap-2 text-foreground">
           <Mic2 className="w-5 h-5 text-primary" />
           <span>Voice Cloning Studio</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
           Generate an authentic digital twin of any voice from a short audio sample or microphone recording.
         </p>
       </div>
@@ -137,8 +137,8 @@ export default function VoiceCloningPage() {
                 Available
               </Badge>
             </div>
-            <CardTitle className="text-base font-semibold">Zero-Shot Latent Synthesis</CardTitle>
-            <CardDescription className="text-xs">
+            <CardTitle className="text-base font-heading font-semibold tracking-tight">Zero-Shot Latent Synthesis</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
               Requires 15 seconds to 2 minutes of clean reference audio. Instant extraction without retraining.
             </CardDescription>
           </CardHeader>
@@ -161,8 +161,8 @@ export default function VoiceCloningPage() {
                 Creator+
               </Badge>
             </div>
-            <CardTitle className="text-base font-semibold">Fine-Tuned Foundation Model</CardTitle>
-            <CardDescription className="text-xs">
+            <CardTitle className="text-base font-heading font-semibold tracking-tight">Fine-Tuned Foundation Model</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
               Requires 30+ minutes of studio-grade WAV samples. Dedicated GPU fine-tuning for ultra-expressive delivery.
             </CardDescription>
           </CardHeader>

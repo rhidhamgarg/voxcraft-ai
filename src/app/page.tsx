@@ -158,8 +158,10 @@ export default function DashboardOverviewPage() {
       {/* Header bar */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Voice Studio Dashboard</h2>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-heading font-semibold tracking-tighter text-foreground">
+            Voice Studio Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
             Generate lifelike neural audio with Kokoro-82M open weights and local 24kHz synthesis.
           </p>
         </div>
@@ -192,7 +194,9 @@ export default function DashboardOverviewPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription>Total Generated</CardDescription>
+                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Total Generated
+                </CardDescription>
                 <CardAction>
                   <Badge variant="outline" className="gap-1 font-mono text-[10px]">
                     <TrendingUp className="h-3 w-3 text-emerald-500" />
@@ -201,8 +205,10 @@ export default function DashboardOverviewPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-2xl font-bold tabular-nums">48,250</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Characters synthesised</p>
+                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                  48,250
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters synthesised</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-0">
                 128 audio tracks exported
@@ -211,7 +217,9 @@ export default function DashboardOverviewPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription>Kokoro Latency</CardDescription>
+                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Kokoro Latency
+                </CardDescription>
                 <CardAction>
                   <Badge variant="success" className="gap-1 font-mono text-[10px]">
                     <Zap className="h-3 w-3" />
@@ -220,8 +228,10 @@ export default function DashboardOverviewPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-2xl font-bold tabular-nums">840 ms</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Mean inference time</p>
+                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                  840 ms
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Mean inference time</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-0">
                 24kHz HiFi-GAN Vocoder
@@ -230,7 +240,9 @@ export default function DashboardOverviewPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription>Active Voices</CardDescription>
+                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Active Voices
+                </CardDescription>
                 <CardAction>
                   <Badge variant="outline" className="gap-1 font-mono text-[10px]">
                     <Layers className="h-3 w-3 text-blue-500" />
@@ -239,8 +251,10 @@ export default function DashboardOverviewPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-2xl font-bold tabular-nums">18 Voices</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Curated neural models</p>
+                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                  18 Voices
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Curated neural models</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-0">
                 Zero per-minute cost
@@ -249,7 +263,9 @@ export default function DashboardOverviewPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardDescription>Remaining Credits</CardDescription>
+                <CardDescription className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Remaining Credits
+                </CardDescription>
                 <CardAction>
                   <Badge variant="outline" className="gap-1 font-mono text-[10px]">
                     <Coins className="h-3 w-3 text-amber-500" />
@@ -258,8 +274,10 @@ export default function DashboardOverviewPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-2xl font-bold tabular-nums">12,500</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Characters available</p>
+                <CardTitle className="text-2xl sm:text-3xl font-heading font-semibold tabular-nums tracking-tighter">
+                  12,500
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 tracking-snug">Characters available</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-0">
                 Renews automatically in 18d
@@ -274,8 +292,10 @@ export default function DashboardOverviewPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-base font-semibold">Quick TTS Playground</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-base sm:text-lg font-heading font-semibold tracking-tight">
+                      Quick TTS Playground
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
                       Test prompts directly with the Kokoro neural vocoder.
                     </CardDescription>
                   </div>
@@ -386,12 +406,16 @@ export default function DashboardOverviewPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-base font-semibold">Recent Generations</CardTitle>
-                    <CardDescription>Latest speech files created in your studio.</CardDescription>
+                    <CardTitle className="text-base sm:text-lg font-heading font-semibold tracking-tight">
+                      Recent Generations
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                      Latest speech files created in your studio.
+                    </CardDescription>
                   </div>
                   <Link
                     href="/studio"
-                    className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
+                    className="text-xs text-primary hover:underline font-medium tracking-snug flex items-center gap-1"
                   >
                     View all <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -402,8 +426,8 @@ export default function DashboardOverviewPage() {
                 {recentGenerations.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
                     <Volume2 className="h-8 w-8 mb-2 opacity-40" />
-                    <p className="text-sm font-medium">No generations recorded yet</p>
-                    <p className="text-xs">Type a prompt in the playground to create your first track.</p>
+                    <p className="text-sm font-heading font-medium tracking-tight">No generations recorded yet</p>
+                    <p className="text-xs leading-relaxed mt-0.5">Type a prompt in the playground to create your first track.</p>
                   </div>
                 ) : (
                   recentGenerations.map((item) => (
@@ -421,10 +445,10 @@ export default function DashboardOverviewPage() {
                           <Play className="h-3.5 w-3.5 ml-0.5 text-foreground" />
                         </Button>
                         <div className="flex flex-col min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate max-w-[200px]">
+                          <p className="text-xs font-medium text-foreground tracking-snug truncate max-w-[200px]">
                             {item.text}
                           </p>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
                             <span>{item.voiceName}</span>
                             <span>·</span>
                             <span>{item.duration}s</span>
@@ -444,7 +468,7 @@ export default function DashboardOverviewPage() {
               </CardContent>
 
               <CardFooter className="border-t border-border/40 pt-4">
-                <Button asChild variant="outline" className="w-full text-xs">
+                <Button asChild variant="outline" className="w-full text-xs font-medium tracking-snug">
                   <Link href="/studio">Open TTS Studio</Link>
                 </Button>
               </CardFooter>
@@ -457,8 +481,8 @@ export default function DashboardOverviewPage() {
               <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
                 <CardHeader>
                   <Sparkles className="h-5 w-5 text-primary mb-2" />
-                  <CardTitle className="text-sm font-semibold">TTS Studio</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-sm font-heading font-semibold tracking-tight">TTS Studio</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Full vocal parameter control, speech pacing, emotion tags and instant preview.
                   </CardDescription>
                 </CardHeader>
@@ -469,8 +493,8 @@ export default function DashboardOverviewPage() {
               <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
                 <CardHeader>
                   <Volume2 className="h-5 w-5 text-blue-500 mb-2" />
-                  <CardTitle className="text-sm font-semibold">Voice Catalog</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-sm font-heading font-semibold tracking-tight">Voice Catalog</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Browse 18 curated high-fidelity neural voices across styles and accents.
                   </CardDescription>
                 </CardHeader>
@@ -481,8 +505,8 @@ export default function DashboardOverviewPage() {
               <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
                 <CardHeader>
                   <MicVocal className="h-5 w-5 text-emerald-500 mb-2" />
-                  <CardTitle className="text-sm font-semibold">Voice Cloning</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-sm font-heading font-semibold tracking-tight">Voice Cloning</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Synthesise custom voice embeddings from a 15-second audio sample.
                   </CardDescription>
                 </CardHeader>
@@ -493,8 +517,8 @@ export default function DashboardOverviewPage() {
               <Card className="h-full hover:border-foreground/30 transition-all group-hover:shadow-sm">
                 <CardHeader>
                   <CreditCard className="h-5 w-5 text-amber-500 mb-2" />
-                  <CardTitle className="text-sm font-semibold">Plans & Scaling</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-sm font-heading font-semibold tracking-tight">Plans & Scaling</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                     Explore credit packs, commercial rights, and dedicated GPU worker clusters.
                   </CardDescription>
                 </CardHeader>
@@ -507,8 +531,12 @@ export default function DashboardOverviewPage() {
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Full Synthesis Activity</CardTitle>
-              <CardDescription>Audit log of all neural speech synthesis requests.</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-heading font-semibold tracking-tight">
+                Full Synthesis Activity
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                Audit log of all neural speech synthesis requests.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -527,8 +555,8 @@ export default function DashboardOverviewPage() {
                         <Play className="h-3.5 w-3.5 ml-0.5" />
                       </Button>
                       <div>
-                        <p className="text-xs font-medium">{item.text}</p>
-                        <span className="text-[11px] text-muted-foreground">
+                        <p className="text-xs font-medium tracking-snug">{item.text}</p>
+                        <span className="text-[11px] text-muted-foreground font-mono">
                           Voice: {item.voiceName} · Latency: 0.84s · {item.timestamp}
                         </span>
                       </div>
@@ -551,8 +579,8 @@ export default function DashboardOverviewPage() {
                 <Badge variant="success" className="w-fit text-[10px] mb-1">
                   Active
                 </Badge>
-                <CardTitle className="text-sm font-semibold">Kokoro-82M</CardTitle>
-                <CardDescription className="text-xs">
+                <CardTitle className="text-sm font-heading font-semibold tracking-tight">Kokoro-82M</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                   82 million parameter Apache-2.0 open-weights model running locally at 24kHz.
                 </CardDescription>
               </CardHeader>
@@ -563,8 +591,8 @@ export default function DashboardOverviewPage() {
                 <Badge variant="secondary" className="w-fit text-[10px] mb-1">
                   Standby
                 </Badge>
-                <CardTitle className="text-sm font-semibold">Deepgram Aura</CardTitle>
-                <CardDescription className="text-xs">
+                <CardTitle className="text-sm font-heading font-semibold tracking-tight">Deepgram Aura</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                   Ultra-low latency streaming cloud fallback for conversational voice agents.
                 </CardDescription>
               </CardHeader>
@@ -575,8 +603,8 @@ export default function DashboardOverviewPage() {
                 <Badge variant="secondary" className="w-fit text-[10px] mb-1">
                   Standby
                 </Badge>
-                <CardTitle className="text-sm font-semibold">OpenAI TTS-1-HD</CardTitle>
-                <CardDescription className="text-xs">
+                <CardTitle className="text-sm font-heading font-semibold tracking-tight">OpenAI TTS-1-HD</CardTitle>
+                <CardDescription className="text-xs text-muted-foreground leading-relaxed mt-1">
                   Enterprise-grade multi-lingual neural speech generation provider.
                 </CardDescription>
               </CardHeader>

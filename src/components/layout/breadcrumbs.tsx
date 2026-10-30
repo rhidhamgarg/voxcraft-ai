@@ -18,7 +18,7 @@ export function Breadcrumbs() {
   const segments = pathname.split("/").filter(Boolean);
 
   return (
-    <nav className="flex items-center space-x-1.5 text-xs text-muted-foreground font-medium">
+    <nav className="flex items-center space-x-1.5 text-xs text-muted-foreground font-medium tracking-snug">
       <Link
         href="/"
         className="flex items-center gap-1 hover:text-foreground transition-colors"

@@ -48,8 +48,10 @@ export default function VoiceSelectorModal({
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold tracking-tight">Select an AI Voice</h2>
-            <p className="text-xs text-muted-foreground">Choose from curated open-weight voices and custom clones</p>
+            <h2 className="text-base font-heading font-semibold tracking-tight">Select an AI Voice</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+              Choose from curated open-weight voices and custom clones
+            </p>
           </div>
           <Button
             size="icon"

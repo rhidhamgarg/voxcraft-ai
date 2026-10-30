@@ -90,12 +90,23 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          "var(--font-inter)",
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           '"Segoe UI"',
           "Roboto",
           '"Helvetica Neue"',
           "Arial",
+          "sans-serif",
+        ],
+        heading: [
+          "Brockmann",
+          "var(--font-heading)",
+          "var(--font-inter)",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
           "sans-serif",
         ],
         mono: [
@@ -106,6 +117,21 @@ const config: Config = {
           "Consolas",
           "monospace",
         ],
+      },
+      letterSpacing: {
+        tighter: "-0.04em",
+        tight: "-0.025em",
+        snug: "-0.015em",
+        normal: "-0.006em",
+        wide: "0.025em",
+        wider: "0.05em",
+        widest: "0.1em",
+      },
+      lineHeight: {
+        display: "1.12",
+        heading: "1.2",
+        subheading: "1.3",
+        body: "1.55",
       },
       keyframes: {
         "accordion-down": {

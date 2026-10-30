@@ -59,14 +59,14 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-sm">{voice.name}</h3>
+              <h3 className="font-heading font-semibold text-sm tracking-tight">{voice.name}</h3>
               {voice.isPremium && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono text-amber-500 border-amber-500/30">
                   <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Pro
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground capitalize">
+            <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5">
               {voice.accent} · {voice.gender}
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
         </button>
       </div>
 
-      <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+      <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed tracking-normal">
         {voice.description}
       </p>
 
