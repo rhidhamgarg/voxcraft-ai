@@ -2,16 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Mic2, Sparkles, Volume2, Coins, ArrowRight, LayoutDashboard } from "lucide-react";
+import { Mic2, Sparkles, Volume2, Coins, ArrowRight } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
-
-  // Hide Navbar completely on the standalone Figma dashboard
-  if (pathname === "/dashboard" || pathname?.startsWith("/dashboard")) {
-    return null;
-  }
-
   const isStudio = pathname?.startsWith("/studio");
 
   return (
@@ -37,13 +31,6 @@ export default function Navbar() {
         {!isStudio && (
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-surface-300">
             <Link
-              href="/dashboard"
-              className="text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 font-semibold"
-            >
-              <LayoutDashboard className="w-4 h-4 text-amber-400" />
-              Figma Dashboard
-            </Link>
-            <Link
               href="/studio"
               className="hover:text-white transition-colors flex items-center gap-1.5"
             >
@@ -61,7 +48,7 @@ export default function Navbar() {
               className="hover:text-white transition-colors flex items-center gap-1.5"
             >
               <Mic2 className="w-4 h-4 text-emerald-400" />
-              Instant Clone
+              Voice Cloning
             </Link>
             <Link
               href="/pricing"
@@ -72,19 +59,19 @@ export default function Navbar() {
           </nav>
         )}
 
-        {/* Right CTA Area */}
+        {/* Right CTA / Action Area */}
         <div className="flex items-center gap-3">
           <Link
-            href="/dashboard"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-medium transition-colors"
+            href="/pricing"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-900 border border-surface-700 text-surface-300 hover:border-brand-500/50 transition-colors"
           >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>Figma UI</span>
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span>10,000 Credits Free</span>
           </Link>
 
           <Link
             href="/studio"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-brand text-white text-sm font-medium hover:opacity-95 shadow-md shadow-brand-500/20 transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white gradient-brand hover:brightness-110 shadow-md shadow-brand-500/20 transition-all"
           >
             <span>Launch Studio</span>
             <ArrowRight className="w-4 h-4" />
