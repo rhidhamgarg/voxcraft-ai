@@ -54,9 +54,39 @@ export class EdgeCloudTTSProvider implements IVoiceProvider {
     return voiceId.replace(/^edge_tts:/, "");
   }
 
+  private mapEnglishVoice(voiceId: string, gender: string): string {
+    const map: Record<string, string> = {
+      "en-US-JennyNeural": "af_bella",
+      "en-US-GuyNeural": "am_adam",
+      "en-US-AriaNeural": "af_sky",
+      "en-GB-SoniaNeural": "bf_emma",
+      "en-GB-RyanNeural": "bm_george",
+    };
+    return map[voiceId] || (gender === "male" ? "am_adam" : "af_bella");
+  }
+
   async synthesizeSpeech(options: SynthesizeOptions): Promise<SynthesizedAudioResult> {
     const { text, voice } = options;
     const langCode = voice.languageCode ? voice.languageCode.split("-")[0] : "en";
+
+    // For English voices, synthesize with diverse local neural timbre
+    if (langCode === "en") {
+      try {
+        const { KokoroVoiceProvider } = await import("./kokoro-provider");
+        const kokoro = new KokoroVoiceProvider();
+        const mappedVoice = this.mapEnglishVoice(voice.providerVoiceId, voice.gender);
+        return await kokoro.synthesizeSpeech({
+          ...options,
+          voice: {
+            ...voice,
+            providerVoiceId: mappedVoice,
+            id: `kokoro:${mappedVoice}`,
+          },
+        });
+      } catch {
+        // fall through to cloud translate endpoint
+      }
+    }
 
     // Split text into safe URL query chunks if long
     const cleanText = text.slice(0, 500);
@@ -92,7 +122,13 @@ export class EdgeCloudTTSProvider implements IVoiceProvider {
 
   async getPreview(voiceId: string): Promise<SynthesizedAudioResult> {
     const cleanId = this.cleanVoiceId(voiceId);
-    const voice = EDGE_VOICES.find((v) => v.providerVoiceId === cleanId) || EDGE_VOICES[0];
+    const voice =
+      EDGE_VOICES.find(
+        (v) =>
+          v.providerVoiceId === cleanId ||
+          v.id === voiceId ||
+          v.id === `edge_tts:${cleanId}`
+      ) || EDGE_VOICES[0];
     const previewText = voice.sampleText;
 
     return this.synthesizeSpeech({

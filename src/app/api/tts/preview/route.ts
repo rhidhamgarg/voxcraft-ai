@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { VoiceProviderRegistry } from "@/lib/providers/provider-registry";
 import { ProviderId } from "@/types";
 
-// In-memory cache for audio previews
+// Dynamic in-memory cache for generated audio previews
 const previewAudioCache = new Map<string, { buffer: Buffer; contentType: string }>();
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const providerParam = (searchParams.get("provider") || "kokoro") as ProviderId;
+    const rawProvider = searchParams.get("provider") || "kokoro";
+    const providerParam = (
+      rawProvider === "edge" ? "edge_tts" :
+      rawProvider === "google" || rawProvider === "gemini" ? "google_cloud" : rawProvider
+    ) as ProviderId;
     const voiceId = searchParams.get("voice") || "af_heart";
 
-    const cacheKey = `${providerParam}:${voiceId}`;
+    const cacheKey = `v3:${providerParam}:${voiceId}`;
     const cached = previewAudioCache.get(cacheKey);
     if (cached) {
       return new NextResponse(new Uint8Array(cached.buffer), {
@@ -19,7 +23,9 @@ export async function GET(req: NextRequest) {
         headers: {
           "Content-Type": cached.contentType,
           "Content-Length": cached.buffer.length.toString(),
-          "Cache-Control": "public, max-age=86400, immutable",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
         },
       });
     }
@@ -37,7 +43,9 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": result.contentType,
         "Content-Length": result.audioBuffer.length.toString(),
-        "Cache-Control": "public, max-age=86400, immutable",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
       },
     });
   } catch (error: any) {

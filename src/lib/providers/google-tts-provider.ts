@@ -228,9 +228,35 @@ export class GoogleCloudTTSProvider implements IVoiceProvider {
     };
   }
 
+  private mapToLocalPreviewVoice(cleanId: string, gender: string): string {
+    const map: Record<string, string> = {
+      Puck: "am_puck",
+      Charon: "am_onyx",
+      Kore: "af_kore",
+      Fenrir: "am_fenrir",
+      Aoede: "af_aoede",
+      "en-US-Journey-F": "af_sarah",
+      "en-US-Journey-D": "am_michael",
+      "en-GB-Neural2-F": "bf_emma",
+      "es-ES-Neural2-F": "af_nicole",
+      "fr-FR-Neural2-A": "bf_alice",
+      "de-DE-Neural2-F": "bf_isabella",
+      "ja-JP-Neural2-B": "af_sky",
+      "hi-IN-Neural2-A": "af_bella",
+    };
+    return map[cleanId] || (gender === "male" ? "am_adam" : "af_bella");
+  }
+
   async getPreview(voiceId: string): Promise<SynthesizedAudioResult> {
     const cleanId = this.cleanVoiceId(voiceId);
-    const voice = GOOGLE_VOICES.find((v) => v.providerVoiceId === cleanId) || GOOGLE_VOICES[0];
+    const voice =
+      GOOGLE_VOICES.find(
+        (v) =>
+          v.providerVoiceId === cleanId ||
+          v.id === voiceId ||
+          v.id === `gemini:${cleanId}` ||
+          v.id === `google_cloud:${cleanId}`
+      ) || GOOGLE_VOICES[0];
     const previewText = voice.sampleText;
 
     if (this.isConfigured) {
@@ -241,16 +267,23 @@ export class GoogleCloudTTSProvider implements IVoiceProvider {
       });
     }
 
-    // Pre-synthesized studio preview for immediate playback without requiring API key
-    const dummyBuffer = this.generateSampleToneWav(previewText);
-    return {
-      audioBuffer: dummyBuffer,
-      contentType: "audio/wav",
-      providerUsed: `${this.name} (${cleanId}) [Preview Mode]`,
-      providerId: this.id,
-      durationSeconds: 2.5,
-      characterCount: previewText.length,
-    };
+    // High fidelity preview fallback using matched neural timber
+    try {
+      const { KokoroVoiceProvider } = await import("./kokoro-provider");
+      const kokoro = new KokoroVoiceProvider();
+      const localId = this.mapToLocalPreviewVoice(cleanId, voice.gender);
+      return await kokoro.getPreview(localId);
+    } catch {
+      const dummyBuffer = this.generateSampleToneWav(previewText);
+      return {
+        audioBuffer: dummyBuffer,
+        contentType: "audio/wav",
+        providerUsed: `${this.name} (${cleanId}) [Preview Mode]`,
+        providerId: this.id,
+        durationSeconds: 2.5,
+        characterCount: previewText.length,
+      };
+    }
   }
 
   private generateSampleToneWav(text: string): Buffer {

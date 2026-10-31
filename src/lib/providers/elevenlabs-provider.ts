@@ -129,9 +129,28 @@ export class ElevenLabsProvider implements IVoiceProvider {
     };
   }
 
+  private mapToLocalPreviewVoice(cleanId: string, gender: string): string {
+    const map: Record<string, string> = {
+      "21m00Tcm4TlvDq8ikWAM": "af_heart",
+      AZnzlk1XvdvUeBnXmlld: "af_nicole",
+      EXAVITQu4vr4xnSDxMaL: "af_bella",
+      ErXwobaYiN019PkySvjV: "am_michael",
+      pNInz6obpgDQGcFmaJgB: "am_adam",
+      TxGEqnHWrfWFTfGW9XjX: "am_eric",
+      VR6AewLTigWG4xSOukaG: "am_onyx",
+    };
+    return map[cleanId] || (gender === "male" ? "am_adam" : "af_heart");
+  }
+
   async getPreview(voiceId: string): Promise<SynthesizedAudioResult> {
     const cleanId = this.cleanVoiceId(voiceId);
-    const voice = ELEVENLABS_VOICES.find((v) => v.providerVoiceId === cleanId) || ELEVENLABS_VOICES[0];
+    const voice =
+      ELEVENLABS_VOICES.find(
+        (v) =>
+          v.providerVoiceId === cleanId ||
+          v.id === voiceId ||
+          v.id === `elevenlabs:${cleanId}`
+      ) || ELEVENLABS_VOICES[0];
     const previewText = voice.sampleText;
 
     if (this.isConfigured) {
@@ -142,16 +161,23 @@ export class ElevenLabsProvider implements IVoiceProvider {
       });
     }
 
-    // Pre-generated preview audio tone for exploration without API key
-    const dummyBuffer = this.generateSampleToneWav(previewText);
-    return {
-      audioBuffer: dummyBuffer,
-      contentType: "audio/wav",
-      providerUsed: `${this.name} (${voice.name}) [Preview Mode]`,
-      providerId: this.id,
-      durationSeconds: 2.2,
-      characterCount: previewText.length,
-    };
+    // High fidelity preview fallback using matched neural timbre
+    try {
+      const { KokoroVoiceProvider } = await import("./kokoro-provider");
+      const kokoro = new KokoroVoiceProvider();
+      const localId = this.mapToLocalPreviewVoice(cleanId, voice.gender);
+      return await kokoro.getPreview(localId);
+    } catch {
+      const dummyBuffer = this.generateSampleToneWav(previewText);
+      return {
+        audioBuffer: dummyBuffer,
+        contentType: "audio/wav",
+        providerUsed: `${this.name} (${voice.name}) [Preview Mode]`,
+        providerId: this.id,
+        durationSeconds: 2.2,
+        characterCount: previewText.length,
+      };
+    }
   }
 
   private generateSampleToneWav(text: string): Buffer {

@@ -96,10 +96,19 @@ export default function StudioPage() {
       const params = new URLSearchParams(window.location.search);
       const voiceParam = params.get("voice");
       if (voiceParam) {
-        const found = allVoices.find((v) => v.id === voiceParam || v.providerVoiceId === voiceParam);
+        const found = allVoices.find(
+          (v) =>
+            v.id === voiceParam ||
+            v.providerVoiceId === voiceParam ||
+            `${v.providerId}:${v.providerVoiceId}` === voiceParam
+        );
         if (found) {
           setSelectedVoice(found);
-          if (found.providerId) setSelectedProviderId(found.providerId);
+          if (found.providerId) {
+            setSelectedProviderId(found.providerId);
+            const defaultModel = getModelsForProvider(found.providerId)[0]?.id || "default";
+            setModelId(defaultModel);
+          }
         }
       }
     }
@@ -112,10 +121,15 @@ export default function StudioPage() {
       .then((res) => {
         if (res.success && res.data?.items) {
           setHistory(res.data.items);
+          const hasVoiceInUrl =
+            typeof window !== "undefined" &&
+            Boolean(new URLSearchParams(window.location.search).get("voice"));
           if (res.data.items.length > 0 && !currentAudioUrl) {
             setCurrentAudioUrl(res.data.items[0].audioUrl);
             setCurrentDuration(res.data.items[0].durationSeconds);
-            setSelectedVoice(res.data.items[0].voice);
+            if (!hasVoiceInUrl) {
+              setSelectedVoice(res.data.items[0].voice);
+            }
           }
         }
       })

@@ -194,7 +194,14 @@ export class KokoroVoiceProvider implements IVoiceProvider {
 
   async getPreview(voiceId: string): Promise<SynthesizedAudioResult> {
     const cleanId = this.cleanVoiceId(voiceId);
-    const voice = KOKORO_VOICES.find((v) => v.providerVoiceId === cleanId) || KOKORO_VOICES[0];
+    const voice =
+      KOKORO_VOICES.find(
+        (v) =>
+          v.providerVoiceId === cleanId ||
+          v.id === voiceId ||
+          v.id === cleanId ||
+          v.id === `kokoro:${cleanId}`
+      ) || KOKORO_VOICES[0];
     const previewText = voice.sampleText || `Hello! This is ${voice.name} powered by Kokoro-82M neural speech.`;
 
     return this.synthesizeSpeech({

@@ -1,9 +1,120 @@
 "use client";
 
 import { Voice } from "@/types";
-import { Play, Pause, Check, Mic2, Loader2, Globe } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Play, Pause, Check, Mic2, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+
+// Global audio coordinator ensuring only one preview plays at any time
+class PreviewPlayer {
+  private static audio: HTMLAudioElement | null = null;
+  private static activeVoiceId: string | null = null;
+  private static isLoading: boolean = false;
+  private static listeners: Set<(voiceId: string | null, loading: boolean) => void> = new Set();
+
+  public static subscribe(listener: (voiceId: string | null, loading: boolean) => void) {
+    this.listeners.add(listener);
+    // Notify newly subscribed card of current state
+    listener(this.activeVoiceId, this.isLoading);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private static notify() {
+    this.listeners.forEach((fn) => fn(this.activeVoiceId, this.isLoading));
+  }
+
+  public static toggle(voice: Voice) {
+    if (typeof window === "undefined") return;
+
+    // If this exact voice is already playing, pause it
+    if (this.activeVoiceId === voice.id) {
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio = null;
+      }
+      this.activeVoiceId = null;
+      this.isLoading = false;
+      this.notify();
+      return;
+    }
+
+    // Stop any previously playing audio immediately
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.audio = null;
+    }
+
+    this.activeVoiceId = voice.id;
+    this.isLoading = true;
+    this.notify();
+
+    const audio = new Audio();
+    // Cache-bust with dynamic timestamp and version to guarantee fresh distinct audio
+    const baseEndpoint =
+      voice.previewUrl ||
+      `/api/tts/preview?provider=${voice.providerId || "kokoro"}&voice=${encodeURIComponent(
+        voice.providerVoiceId || voice.id
+      )}`;
+    const separator = baseEndpoint.includes("?") ? "&" : "?";
+    audio.src = `${baseEndpoint}${separator}t=${Date.now()}`;
+
+    audio.oncanplay = () => {
+      if (this.activeVoiceId === voice.id) {
+        this.isLoading = false;
+        this.notify();
+      }
+    };
+
+    audio.onplay = () => {
+      if (this.activeVoiceId === voice.id) {
+        this.isLoading = false;
+        this.notify();
+      }
+    };
+
+    audio.onended = () => {
+      if (this.activeVoiceId === voice.id) {
+        this.activeVoiceId = null;
+        this.isLoading = false;
+        this.audio = null;
+        this.notify();
+      }
+    };
+
+    audio.onerror = () => {
+      if (this.activeVoiceId === voice.id) {
+        this.activeVoiceId = null;
+        this.isLoading = false;
+        this.audio = null;
+        this.notify();
+      }
+    };
+
+    this.audio = audio;
+    audio.play().catch(() => {
+      if (this.activeVoiceId === voice.id) {
+        this.activeVoiceId = null;
+        this.isLoading = false;
+        this.audio = null;
+        this.notify();
+      }
+    });
+  }
+
+  public static stopIfActive(voiceId: string) {
+    if (this.activeVoiceId === voiceId && this.audio) {
+      this.audio.pause();
+      this.audio = null;
+      this.activeVoiceId = null;
+      this.isLoading = false;
+      this.notify();
+    }
+  }
+}
 
 interface VoiceCardProps {
   voice: Voice;
@@ -14,16 +125,18 @@ interface VoiceCardProps {
 export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    const unsubscribe = PreviewPlayer.subscribe((activeId, loading) => {
+      const isThisActive = activeId === voice.id;
+      setIsPlaying(isThisActive && !loading);
+      setIsLoadingAudio(isThisActive && loading);
+    });
+
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      unsubscribe();
     };
-  }, []);
+  }, [voice.id]);
 
   const getProviderBadge = (providerId?: string) => {
     switch (providerId) {
@@ -42,53 +155,9 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
     }
   };
 
-  const toggleSample = async (e: React.MouseEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    if (!audioRef.current) {
-      setIsLoadingAudio(true);
-      const audio = new Audio();
-      const previewEndpoint =
-        voice.previewUrl ||
-        `/api/tts/preview?provider=${voice.providerId || "kokoro"}&voice=${encodeURIComponent(
-          voice.providerVoiceId || voice.id
-        )}`;
-      audio.src = previewEndpoint;
-
-      audio.oncanplaythrough = () => {
-        setIsLoadingAudio(false);
-      };
-
-      audio.onplay = () => {
-        setIsLoadingAudio(false);
-        setIsPlaying(true);
-      };
-
-      audio.onended = () => {
-        setIsPlaying(false);
-      };
-
-      audio.onerror = () => {
-        setIsLoadingAudio(false);
-        setIsPlaying(false);
-      };
-
-      audioRef.current = audio;
-    }
-
-    try {
-      await audioRef.current.play();
-      setIsPlaying(true);
-    } catch {
-      setIsLoadingAudio(false);
-      setIsPlaying(false);
-    }
+    PreviewPlayer.toggle(voice);
   };
 
   return (
@@ -132,7 +201,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
 
         <button
           type="button"
-          onClick={toggleSample}
+          onClick={handleToggle}
           disabled={isLoadingAudio}
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
             isPlaying
