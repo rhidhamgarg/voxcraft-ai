@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { synthesizeSpeech } from "@/lib/provider-client";
-import { DEFAULT_VOICES } from "@/lib/voice-catalog";
+import { VoiceProviderRegistry } from "@/lib/providers/provider-registry";
+import { ProviderId } from "@/types";
 
-// Cache in-memory previews for instant playback
+// In-memory cache for audio previews
 const previewAudioCache = new Map<string, { buffer: Buffer; contentType: string }>();
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+    const providerParam = (searchParams.get("provider") || "kokoro") as ProviderId;
     const voiceId = searchParams.get("voice") || "af_heart";
 
-    const cached = previewAudioCache.get(voiceId);
+    const cacheKey = `${providerParam}:${voiceId}`;
+    const cached = previewAudioCache.get(cacheKey);
     if (cached) {
       return new NextResponse(new Uint8Array(cached.buffer), {
         status: 200,
@@ -22,21 +24,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const voice = DEFAULT_VOICES.find((v) => v.id === voiceId) || DEFAULT_VOICES[0];
-    const previewText = voice.sampleText || `Hello! This is ${voice.name} powered by Kokoro-82M neural speech.`;
+    const registry = VoiceProviderRegistry.getInstance();
+    const result = await registry.getPreview(providerParam, voiceId);
 
-    const result = await synthesizeSpeech({
-      text: previewText,
-      voice,
-      settings: {
-        speed: 1.0,
-        stability: 0.7,
-        similarity: 0.8,
-        styleExaggeration: 0.0,
-      },
-    });
-
-    previewAudioCache.set(voiceId, {
+    previewAudioCache.set(cacheKey, {
       buffer: result.audioBuffer,
       contentType: result.contentType,
     });

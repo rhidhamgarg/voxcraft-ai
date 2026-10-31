@@ -16,15 +16,30 @@ export function useGsapContext(
   dependencies: any[] = []
 ) {
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (prefersReducedMotion()) return;
 
-    const ctx = gsap.context((self) => {
-      callback(self);
-    }, scope?.current || undefined);
+    let ctx: gsap.Context | undefined;
+    try {
+      ctx = gsap.context((self) => {
+        try {
+          callback(self);
+        } catch (err) {
+          console.warn("GSAP context callback error:", err);
+        }
+      }, scope?.current || undefined);
+    } catch (e) {
+      console.warn("GSAP context creation error:", e);
+    }
 
     return () => {
-      ctx.revert();
+      try {
+        ctx?.revert();
+      } catch (err) {
+        // ignore revert error on unmount
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 }
+

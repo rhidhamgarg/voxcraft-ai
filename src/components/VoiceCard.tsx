@@ -1,7 +1,7 @@
 "use client";
 
 import { Voice } from "@/types";
-import { Play, Pause, Check, Mic2, Loader2 } from "lucide-react";
+import { Play, Pause, Check, Mic2, Loader2, Globe } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
@@ -25,6 +25,23 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
     };
   }, []);
 
+  const getProviderBadge = (providerId?: string) => {
+    switch (providerId) {
+      case "kokoro":
+        return <Badge variant="steel" className="text-[10px] px-1.5 py-0 font-mono">Kokoro 82M</Badge>;
+      case "gemini":
+        return <Badge variant="ivory" className="text-[10px] px-1.5 py-0 font-mono">Gemini 2.0</Badge>;
+      case "google_cloud":
+        return <Badge variant="subtle" className="text-[10px] px-1.5 py-0 font-mono">Google Cloud</Badge>;
+      case "elevenlabs":
+        return <Badge variant="steel" className="text-[10px] px-1.5 py-0 font-mono">ElevenLabs</Badge>;
+      case "edge_tts":
+        return <Badge variant="subtle" className="text-[10px] px-1.5 py-0 font-mono">Cloud Multi</Badge>;
+      default:
+        return <Badge variant="subtle" className="text-[10px] px-1.5 py-0 font-mono">Neural</Badge>;
+    }
+  };
+
   const toggleSample = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -37,12 +54,17 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
     if (!audioRef.current) {
       setIsLoadingAudio(true);
       const audio = new Audio();
-      audio.src = `/api/tts/preview?voice=${encodeURIComponent(voice.id)}`;
-      
+      const previewEndpoint =
+        voice.previewUrl ||
+        `/api/tts/preview?provider=${voice.providerId || "kokoro"}&voice=${encodeURIComponent(
+          voice.providerVoiceId || voice.id
+        )}`;
+      audio.src = previewEndpoint;
+
       audio.oncanplaythrough = () => {
         setIsLoadingAudio(false);
       };
-      
+
       audio.onplay = () => {
         setIsLoadingAudio(false);
         setIsPlaying(true);
@@ -81,7 +103,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs">
+            <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
               {voice.name.charAt(0)}
             </div>
             {voice.isCloned && (
@@ -94,14 +116,16 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
             )}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="font-heading font-semibold text-sm tracking-tight">{voice.name}</h3>
-              <Badge variant="subtle" className="text-[10px] px-1.5 py-0 font-mono">
-                Free
-              </Badge>
+              {getProviderBadge(voice.providerId)}
             </div>
-            <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5">
-              {voice.accent} · {voice.gender}
+            <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5 flex items-center gap-1">
+              <span>{voice.languageCode || "en-US"}</span>
+              <span>·</span>
+              <span>{voice.accent}</span>
+              <span>·</span>
+              <span>{voice.gender}</span>
             </p>
           </div>
         </div>
@@ -110,7 +134,7 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
           type="button"
           onClick={toggleSample}
           disabled={isLoadingAudio}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
             isPlaying
               ? "bg-primary text-primary-foreground shadow-xs"
               : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"

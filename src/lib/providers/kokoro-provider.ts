@@ -1,50 +1,73 @@
-import { IVoiceProvider, SynthesizeOptions, SynthesizedAudioResult } from "./voice-provider.interface";
-import { Voice } from "@/types";
-import { DEFAULT_VOICES } from "../voice-catalog";
-import { spawn } from "child_process";
+import {
+  IVoiceProvider,
+  SynthesizeOptions,
+  SynthesizedAudioResult,
+} from "./voice-provider.interface";
+import { ProviderId, ProviderModelInfo, TTSProviderInfo, Voice } from "@/types";
+import { KOKORO_VOICES } from "../voice-catalog";
 import path from "path";
 import fs from "fs";
+import { spawn } from "child_process";
 
 export class KokoroVoiceProvider implements IVoiceProvider {
-  readonly id = "kokoro";
-  readonly name = "Kokoro-82M Neural TTS (Open-Weights)";
+  readonly id: ProviderId = "kokoro";
+  readonly name = "Kokoro-82M Neural TTS";
+  readonly shortName = "Kokoro 82M";
+  readonly description = "Open-weights neural vocoder running locally on your hardware at 24,000 Hz with sub-second latency.";
+  readonly badge = "Local Open Weights · 100% Free";
+  readonly providerType = "local" as const;
   readonly isConfigured = true;
+  readonly requiresApiKey = false;
+  readonly supportedSettings: ("speed" | "stability")[] = ["speed", "stability"];
 
   private serviceUrl = process.env.KOKORO_SERVICE_URL || "http://127.0.0.1:8880";
   private pythonPath = path.resolve(process.cwd(), "kokoro_env", "Scripts", "python.exe");
   private fallbackScript = path.resolve(process.cwd(), "python", "synthesize.py");
 
-  private resolveVoiceId(voiceId: string): string {
-    if (
-      voiceId.startsWith("af_") ||
-      voiceId.startsWith("am_") ||
-      voiceId.startsWith("bf_") ||
-      voiceId.startsWith("bm_")
-    ) {
-      return voiceId;
-    }
+  getModels(): ProviderModelInfo[] {
+    return [
+      {
+        id: "kokoro_82m_v019",
+        name: "Kokoro-82M v0.19 (Flagship)",
+        description: "82-million parameter StyleTTS 2 architecture with 24kHz ISTFTNet vocoder.",
+        sampleRate: 24000,
+        languages: ["en-US", "en-GB"],
+        latencyDescription: "< 500ms on GPU / ~800ms on CPU",
+      },
+    ];
+  }
 
-    const mapping: Record<string, string> = {
-      "vox-aura-elise": "af_heart",
-      "vox-aura-marcus": "am_adam",
-      "vox-aura-sora": "af_bella",
-      "vox-aura-caleb": "am_echo",
-      "vox-aura-sophia": "af_nicole",
-      "vox-aura-vikram": "am_michael",
-      "vox-aura-orion": "am_onyx",
-      "vox-aura-clara": "bf_emma",
+  getProviderInfo(): TTSProviderInfo {
+    return {
+      id: this.id,
+      name: this.name,
+      shortName: this.shortName,
+      description: this.description,
+      badge: this.badge,
+      providerType: this.providerType,
+      isConfigured: this.isConfigured,
+      requiresApiKey: this.requiresApiKey,
+      models: this.getModels(),
+      supportedSettings: this.supportedSettings,
+      voiceCount: KOKORO_VOICES.length,
     };
-
-    return mapping[voiceId] || "af_heart";
   }
 
   async getVoices(): Promise<Voice[]> {
-    return DEFAULT_VOICES;
+    return KOKORO_VOICES;
+  }
+
+  private cleanVoiceId(voiceId: string): string {
+    // Strip "kokoro:" prefix if present
+    if (voiceId.startsWith("kokoro:")) {
+      return voiceId.replace("kokoro:", "");
+    }
+    return voiceId;
   }
 
   async synthesizeSpeech(options: SynthesizeOptions): Promise<SynthesizedAudioResult> {
     const { text, voice, settings } = options;
-    const targetVoice = this.resolveVoiceId(voice.id);
+    const targetVoice = this.cleanVoiceId(voice.providerVoiceId || voice.id);
     const speed = Math.max(0.5, Math.min(2.0, settings.speed || 1.0));
 
     // 1. Try FastAPI microservice on localhost:8880 (high speed in-memory pipeline)
@@ -78,12 +101,14 @@ export class KokoroVoiceProvider implements IVoiceProvider {
           audioBuffer: buffer,
           contentType: "audio/wav",
           providerUsed: `${this.name} (${targetVoice})`,
+          providerId: this.id,
           durationSeconds: parseFloat(durationSeconds.toFixed(2)),
+          characterCount: text.length,
         };
       }
     } catch {
-      // Microservice offline or timeout - fallback to CLI execution
-      console.log(`[KokoroProvider] Service at ${this.serviceUrl} unreachable, falling back to CLI...`);
+      // Fall through to CLI execution
+      console.log(`[KokoroProvider] Service at ${this.serviceUrl} unreachable, falling back to CLI execution...`);
     }
 
     // 2. Direct Python process fallback
@@ -98,32 +123,38 @@ export class KokoroVoiceProvider implements IVoiceProvider {
   private synthesizeViaCLI(text: string, voice: string, speed: number): Promise<SynthesizedAudioResult> {
     return new Promise((resolve, reject) => {
       if (!fs.existsSync(this.pythonPath)) {
-        return reject(new Error(`Kokoro Python virtualenv not found at ${this.pythonPath}`));
+        return reject(new Error(`Python environment not found at: ${this.pythonPath}`));
       }
 
-      const tempDir = path.resolve(process.cwd(), "public", "audio");
+      const tempOutputFile = path.resolve(
+        process.cwd(),
+        "tmp",
+        `kokoro_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.wav`
+      );
+
+      const tempDir = path.dirname(tempOutputFile);
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      const outputFile = path.resolve(
-        tempDir,
-        `kokoro_${Date.now()}_${Math.random().toString(36).substring(7)}.wav`
-      );
+      const args = [
+        this.fallbackScript,
+        "--text",
+        text,
+        "--voice",
+        voice,
+        "--speed",
+        speed.toString(),
+        "--output",
+        tempOutputFile,
+      ];
 
-      const pyProcess = spawn(this.pythonPath, [this.fallbackScript], {
+      const pyProcess = spawn(this.pythonPath, args, {
+        cwd: process.cwd(),
         env: {
           ...process.env,
-          VIRTUAL_ENV: path.resolve(process.cwd(), "kokoro_env"),
-          HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+          PYTHONIOENCODING: "utf-8",
         },
-      });
-
-      const payload = JSON.stringify({
-        text,
-        voice,
-        speed,
-        output_path: outputFile,
       });
 
       let stderr = "";
@@ -133,49 +164,60 @@ export class KokoroVoiceProvider implements IVoiceProvider {
 
       pyProcess.on("close", (code) => {
         if (code !== 0) {
-          return reject(new Error(`Kokoro CLI inference failed (exit code ${code}): ${stderr}`));
+          return reject(new Error(`Kokoro CLI failed with code ${code}: ${stderr}`));
         }
 
         try {
-          if (!fs.existsSync(outputFile)) {
-            return reject(new Error("Kokoro CLI did not generate output file"));
+          if (!fs.existsSync(tempOutputFile)) {
+            return reject(new Error("Kokoro CLI did not generate output audio file."));
           }
 
-          const buffer = fs.readFileSync(outputFile);
-          // 24000 samples/sec * 2 bytes/sample (16-bit mono) = 48000 bytes/sec
-          const durationSeconds = Math.max(0.5, (buffer.length - 44) / 48000);
+          const audioBuffer = fs.readFileSync(tempOutputFile);
+          fs.unlinkSync(tempOutputFile);
 
-          try {
-            fs.unlinkSync(outputFile);
-          } catch {
-            // ignore
-          }
+          const durationSeconds = Math.max(1, text.length / 15);
 
           resolve({
-            audioBuffer: buffer,
+            audioBuffer,
             contentType: "audio/wav",
-            providerUsed: `${this.name} (${voice} - CLI)`,
+            providerUsed: `${this.name} (${voice}) [CLI]`,
+            providerId: this.id,
             durationSeconds: parseFloat(durationSeconds.toFixed(2)),
+            characterCount: text.length,
           });
-        } catch (readErr) {
-          reject(readErr);
+        } catch (fileErr) {
+          reject(fileErr);
         }
       });
-
-      pyProcess.stdin.write(payload);
-      pyProcess.stdin.end();
     });
   }
 
-  async getHealth() {
+  async getPreview(voiceId: string): Promise<SynthesizedAudioResult> {
+    const cleanId = this.cleanVoiceId(voiceId);
+    const voice = KOKORO_VOICES.find((v) => v.providerVoiceId === cleanId) || KOKORO_VOICES[0];
+    const previewText = voice.sampleText || `Hello! This is ${voice.name} powered by Kokoro-82M neural speech.`;
+
+    return this.synthesizeSpeech({
+      text: previewText,
+      voice,
+      settings: { speed: 1.0, stability: 0.7 },
+    });
+  }
+
+  async getHealth(): Promise<{ status: "healthy" | "degraded" | "unavailable"; latencyMs?: number; message?: string }> {
     try {
-      const res = await fetch(`${this.serviceUrl}/health`, { signal: AbortSignal.timeout(2000) });
+      const start = Date.now();
+      const res = await fetch(`${this.serviceUrl}/health`, { signal: AbortSignal.timeout(1500) });
+      const latencyMs = Date.now() - start;
       if (res.ok) {
-        return { status: "healthy" as const, latencyMs: 25 };
+        return { status: "healthy", latencyMs, message: "FastAPI Daemon Active" };
       }
+      return { status: "degraded", latencyMs, message: "Daemon returned non-200, CLI fallback ready" };
     } catch {
-      // ignore
+      if (fs.existsSync(this.pythonPath)) {
+        return { status: "degraded", message: "Daemon offline, direct Python CLI fallback ready" };
+      }
+      return { status: "unavailable", message: "Kokoro python environment missing" };
     }
-    return { status: "degraded" as const, latencyMs: 250 };
   }
 }

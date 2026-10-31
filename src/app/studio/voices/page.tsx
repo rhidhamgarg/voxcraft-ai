@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Voice } from "@/types";
-import { DEFAULT_VOICES } from "@/lib/voice-catalog";
+import { ALL_CATALOG_VOICES } from "@/lib/voice-catalog";
 import VoiceCard from "@/components/VoiceCard";
-import { Search, Library, Sparkles, Filter, Plus, Volume2 } from "lucide-react";
+import { Search, Library, Sparkles, Plus, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageContainer from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useGsapContext } from "@/hooks/use-gsap";
 import { gsap, MOTION } from "@/lib/gsap";
@@ -17,8 +17,10 @@ import { gsap, MOTION } from "@/lib/gsap";
 export default function VoiceLibraryPage() {
   const router = useRouter();
   const voicesRef = useRef<HTMLDivElement>(null);
-  const [voices, setVoices] = useState<Voice[]>(DEFAULT_VOICES);
+  const [voices, setVoices] = useState<Voice[]>(ALL_CATALOG_VOICES);
   const [search, setSearch] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string>("all");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [category, setCategory] = useState("all");
   const [gender, setGender] = useState("all");
 
@@ -34,6 +36,12 @@ export default function VoiceLibraryPage() {
   }, []);
 
   const filteredVoices = voices.filter((voice) => {
+    const matchesProvider =
+      selectedProvider === "all" || voice.providerId === selectedProvider;
+    const matchesLanguage =
+      selectedLanguage === "all" ||
+      (voice.languageCode && voice.languageCode.startsWith(selectedLanguage)) ||
+      (voice.accent && voice.accent.toLowerCase().includes(selectedLanguage.toLowerCase()));
     const matchesCategory =
       category === "all"
         ? true
@@ -45,9 +53,10 @@ export default function VoiceLibraryPage() {
       voice.name.toLowerCase().includes(search.toLowerCase()) ||
       voice.accent.toLowerCase().includes(search.toLowerCase()) ||
       voice.description.toLowerCase().includes(search.toLowerCase()) ||
+      (voice.languageName && voice.languageName.toLowerCase().includes(search.toLowerCase())) ||
       voice.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
 
-    return matchesCategory && matchesGender && matchesSearch;
+    return matchesProvider && matchesLanguage && matchesCategory && matchesGender && matchesSearch;
   });
 
   // GSAP animation for voice library entrance
@@ -76,8 +85,16 @@ export default function VoiceLibraryPage() {
     [filteredVoices.length]
   );
 
+  const providerFilters = [
+    { id: "all", label: `All Providers (${voices.length})` },
+    { id: "kokoro", label: "Kokoro 82M (23)" },
+    { id: "edge", label: "Cloud Multi (10)" },
+    { id: "google", label: "Google TTS (13)" },
+    { id: "elevenlabs", label: "ElevenLabs (7)" },
+  ];
+
   const categories = [
-    { id: "all", label: "All Voices (23)" },
+    { id: "all", label: "All Categories" },
     { id: "conversational", label: "Conversational" },
     { id: "narration", label: "Narration" },
     { id: "characters", label: "Characters" },
@@ -96,11 +113,11 @@ export default function VoiceLibraryPage() {
                 Voice Library & Roster
               </h1>
               <Badge variant="steel" className="text-[10px]">
-                23 Neural Voices · 100% Free
+                {voices.length} Multi-Provider Voices
               </Badge>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Explore 23 high-fidelity Kokoro-82M neural voices with zero subscription requirements or tier limits.
+              Explore 53+ high-fidelity voices across Kokoro 82M open-weights, Cloud Multilingual, Google Gemini, and ElevenLabs.
             </p>
           </div>
 
@@ -120,37 +137,72 @@ export default function VoiceLibraryPage() {
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search by voice name, accent, tone, or style tags..."
+                  placeholder="Search by voice name, language, accent, tone, or style tags..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-4 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="h-9 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              {/* Language filter */}
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="h-9 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="all">All Languages</option>
+                <option value="en">English (US & UK)</option>
+                <option value="es">Spanish (Español)</option>
+                <option value="fr">French (Français)</option>
+                <option value="de">German (Deutsch)</option>
+                <option value="ja">Japanese (日本語)</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+              </select>
+
+              {/* Gender filter */}
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="h-9 px-3 rounded-md border border-input bg-background text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="all">All Genders</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+              </select>
+            </div>
+
+            {/* Provider Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pt-1">
+              <span className="text-[11px] font-mono text-muted-foreground mr-1 whitespace-nowrap">
+                Provider:
+              </span>
+              {providerFilters.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedProvider(p.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                    selectedProvider === p.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                  }`}
                 >
-                  <option value="all">All Genders</option>
-                  <option value="female">Female (11)</option>
-                  <option value="male">Male (12)</option>
-                </select>
-              </div>
+                  {p.label}
+                </button>
+              ))}
             </div>
 
             {/* Categories Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto pt-1">
+            <div className="flex items-center gap-2 overflow-x-auto pt-1 border-t border-border/50">
               {categories.map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setCategory(c.id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                  className={`px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
                     category === c.id
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border-border"
+                      ? "bg-foreground text-background border-foreground shadow-xs"
+                      : "bg-muted/20 text-muted-foreground hover:bg-muted hover:text-foreground border-border/60"
                   }`}
                 >
                   {c.label}
@@ -177,7 +229,7 @@ export default function VoiceLibraryPage() {
             <Library className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-30" />
             <h3 className="text-base font-heading font-semibold tracking-tight">No matching voices found</h3>
             <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-              Try adjusting your search criteria or filter categories.
+              Try adjusting your search criteria, language selection, or provider filter.
             </p>
           </Card>
         )}

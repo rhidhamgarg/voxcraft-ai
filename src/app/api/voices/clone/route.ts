@@ -13,14 +13,19 @@ export async function POST(req: NextRequest) {
 
     const newVoice: Voice = {
       id: `cloned-${Date.now()}`,
+      providerVoiceId: `cloned-${Date.now()}`,
+      providerId: "kokoro",
       name: name.trim(),
       category: category || "cloned",
       gender: gender || "female",
       accent: accent || "Custom Clone",
+      languageCode: "en-US",
+      languageName: "English (US)",
       description: description || "User-created Instant Voice Clone.",
       previewUrl: "",
       sampleText: sampleText || `Hi, I am ${name}, your new personalized AI voice clone.`,
       tags: ["Custom Clone", "IVC", category || "Personal"],
+      supportedSettings: ["speed", "stability"],
       isCloned: true,
       isPremium: false,
     };
