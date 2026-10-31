@@ -188,13 +188,21 @@ export default function VoiceCard({ voice, isSelected, onSelect }: VoiceCardProp
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="font-heading font-semibold text-sm tracking-tight">{voice.name}</h3>
               {getProviderBadge(voice.providerId)}
+              {voice.voiceType === "child" && (
+                <Badge variant="subtle" className="text-[9px] px-1.5 py-0 bg-amber-500/15 text-amber-400 border-amber-500/30">
+                  Child-like
+                </Badge>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5 flex items-center gap-1">
-              <span>{voice.languageCode || "en-US"}</span>
+            <p className="text-xs text-muted-foreground capitalize tracking-snug mt-0.5 flex items-center gap-1 flex-wrap">
+              {voice.flagEmoji && <span>{voice.flagEmoji}</span>}
+              <span>{voice.countryName || voice.accent}</span>
               <span>·</span>
-              <span>{voice.accent}</span>
+              <span>{voice.languageName || voice.languageCode || "en-US"}</span>
               <span>·</span>
-              <span>{voice.gender}</span>
+              <span className={voice.voiceType === "child" ? "text-amber-400 font-medium" : ""}>
+                {voice.voiceType === "child" ? "Child / Youth" : voice.gender}
+              </span>
             </p>
           </div>
         </div>

@@ -2,6 +2,29 @@ export type VoiceCategory = 'narration' | 'conversational' | 'characters' | 'soc
 
 export type VoiceGender = 'male' | 'female' | 'non-binary';
 
+export type VoiceType = 'female' | 'male' | 'child' | 'non-binary';
+
+export type VoiceAgeGroup = 'child' | 'young_adult' | 'adult' | 'mature';
+
+export type VoiceRegion =
+  | 'All'
+  | 'Asia'
+  | 'Europe'
+  | 'North America'
+  | 'South America'
+  | 'Africa'
+  | 'Oceania'
+  | 'Middle East';
+
+export type VoiceTone =
+  | 'deep'
+  | 'soft'
+  | 'energetic'
+  | 'calm'
+  | 'professional'
+  | 'conversational'
+  | 'narration';
+
 export type ProviderId =
   | 'kokoro'
   | 'elevenlabs'
@@ -11,7 +34,6 @@ export type ProviderId =
   | 'edge'
   | 'google';
 
-
 export interface Voice {
   id: string; // e.g. "kokoro:af_heart" or "af_heart"
   providerVoiceId: string; // vendor specific ID e.g. "af_heart", "21m00Tcm4TlvDq8ikWAM", "en-US-Journey-F"
@@ -19,7 +41,14 @@ export interface Voice {
   name: string;
   category: VoiceCategory;
   gender: VoiceGender;
-  languageCode: string; // e.g. "en-US", "en-GB", "es-ES", "ja-JP"
+  voiceType?: VoiceType;
+  ageGroup?: VoiceAgeGroup;
+  traits?: string[];
+  region?: VoiceRegion;
+  countryCode?: string;
+  countryName?: string;
+  flagEmoji?: string;
+  languageCode: string; // e.g. "en-US", "hi-IN", "ta-IN", "bn-IN"
   languageName: string;
   accent: string;
   description: string;
